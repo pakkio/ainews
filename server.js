@@ -164,69 +164,35 @@ class AIIntelligenceService {
   }
 
   getMockNewsData(query) {
-    const realModels = ['GPT-4o', 'Claude 3.5 Sonnet', 'Gemini 1.5 Pro', 'Llama 3.1 405B', 'GPT-4 Turbo'];
-    const realCompanies = ['OpenAI', 'Anthropic', 'Google DeepMind', 'Meta AI', 'Mistral AI', 'Cohere'];
-    const realVCs = ['Andreessen Horowitz', 'Sequoia Capital', 'General Catalyst', 'Lightspeed Venture Partners'];
-    const currentDate = new Date();
-    
-    const mockSources = [
+    return [
       {
-        title: `${realCompanies[0]} releases ${realModels[0]} with 128K context window and multimodal capabilities`,
-        description: `OpenAI's latest GPT-4o model demonstrates significant improvements in reasoning capabilities, achieving 83.1% on MMLU benchmarks and reducing inference costs by 50% compared to GPT-4 Turbo. Enterprise customers including Microsoft, Salesforce, and Khan Academy report deployment in production environments with enhanced code generation and analysis capabilities.`,
-        url: 'https://openai.com/blog/gpt-4o-system-card',
-        publishedAt: new Date(currentDate.getTime() - 2*24*60*60*1000).toISOString(),
-        source: 'OpenAI Official Blog',
+        title: `DEMO: Latest ${query} developments and market analysis`,
+        description: `[PLACEHOLDER] This is demo content showing how news articles would appear. Enable live data by setting NEWS_API_KEY environment variable to get real news articles related to your query.`,
+        url: 'https://example.com/demo-source-1',
+        publishedAt: new Date(Date.now() - 2*24*60*60*1000).toISOString(),
+        source: 'Demo News Source',
         type: 'news',
-        relevanceScore: 0.98
+        relevanceScore: 0.85
       },
       {
-        title: `${realCompanies[1]} raises $2.75B Series C led by ${realVCs[0]} as Claude 3.5 Sonnet adoption accelerates`,
-        description: `Anthropic secures major funding round valuing the company at $18.4B, with enterprise adoption of Claude 3.5 Sonnet growing 340% quarter-over-quarter. Major deployments include Bridgewater Associates for investment research, Boston Consulting Group for strategic analysis, and GitLab for code review automation.`,
-        url: 'https://techcrunch.com/anthropic-funding-round-2024',
-        publishedAt: new Date(currentDate.getTime() - 12*60*60*1000).toISOString(),
-        source: 'TechCrunch',
+        title: `DEMO: ${query} industry trends and enterprise adoption`,
+        description: `[PLACEHOLDER] Sample content demonstrating analysis structure. Real data will show actual company announcements, funding rounds, and technical developments when NEWS_API_KEY is configured.`,
+        url: 'https://example.com/demo-source-2',
+        publishedAt: new Date(Date.now() - 24*60*60*1000).toISOString(),
+        source: 'Demo Tech Report',
         type: 'news',
-        relevanceScore: 0.94
+        relevanceScore: 0.78
       },
       {
-        title: `EU AI Act implementation forces ${realCompanies[2]} to modify Gemini 1.5 Pro deployment strategy`,
-        description: `Google DeepMind announces compliance modifications for Gemini 1.5 Pro following EU AI Act requirements, implementing enhanced transparency reporting and risk assessment protocols. The changes affect enterprise customers across 27 EU member states, with new audit requirements for high-risk AI applications in healthcare and finance.`,
-        url: 'https://blog.google/technology/ai/gemini-eu-ai-act-compliance-2024',
-        publishedAt: new Date(currentDate.getTime() - 18*60*60*1000).toISOString(),
-        source: 'Google AI Blog',
+        title: `DEMO: Regulatory and compliance updates for ${query}`,
+        description: `[PLACEHOLDER] Example of regulatory content. Live data will include actual policy changes, compliance requirements, and legal developments affecting the AI industry.`,
+        url: 'https://example.com/demo-source-3',
+        publishedAt: new Date(Date.now() - 36*60*60*1000).toISOString(),
+        source: 'Demo Policy News',
         type: 'news',
-        relevanceScore: 0.91
-      },
-      {
-        title: `${realCompanies[3]} releases ${realModels[3]} open-source model challenging OpenAI dominance`,
-        description: `Meta AI's Llama 3.1 405B model achieves GPT-4 level performance on coding benchmarks while maintaining open-source licensing. The release includes 8B and 70B parameter variants optimized for edge deployment, with Microsoft Azure, Amazon AWS, and Google Cloud providing hosted inference endpoints.`,
-        url: 'https://ai.meta.com/blog/llama-3-1-405b-release',
-        publishedAt: new Date(currentDate.getTime() - 24*60*60*1000).toISOString(),
-        source: 'Meta AI Research',
-        type: 'news',
-        relevanceScore: 0.96
-      },
-      {
-        title: `${realCompanies[4]} secures $640M Series B from ${realVCs[1]} for European AI sovereignty initiative`,
-        description: `Mistral AI's latest funding round positions the French startup as Europe's answer to American AI dominance, with Mistral Large achieving competitive performance against GPT-4 while ensuring GDPR compliance and EU data residency. Enterprise customers include BNP Paribas, Orange, and Airbus for sensitive applications.`,
-        url: 'https://techcrunch.com/mistral-ai-series-b-funding',
-        publishedAt: new Date(currentDate.getTime() - 36*60*60*1000).toISOString(),
-        source: 'Reuters Technology',
-        type: 'news',
-        relevanceScore: 0.89
-      },
-      {
-        title: `Enterprise AI deployment accelerates as ${realCompanies[5]} partners with Salesforce for RAG applications`,
-        description: `Cohere's enterprise-focused Command R+ model integrates with Salesforce Einstein, enabling retrieval-augmented generation for customer service and sales automation. Implementation at companies like Shopify and HubSpot demonstrates 60% improvement in response accuracy and 40% reduction in support ticket resolution time.`,
-        url: 'https://cohere.com/blog/salesforce-partnership-rag',
-        publishedAt: new Date(currentDate.getTime() - 48*60*60*1000).toISOString(),
-        source: 'Cohere Blog',
-        type: 'news',
-        relevanceScore: 0.87
+        relevanceScore: 0.72
       }
     ];
-    
-    return mockSources;
   }
 
   async searchArxiv(query) {
@@ -312,20 +278,43 @@ class AIIntelligenceService {
       sources_analyzed: searchResults.totalFound,
       analysisDepth: analysisDepth,
       methodology: 'Multi-source synthesis with confidence scoring',
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      queryContext: this.analyzeQueryContext(query)
     };
+  }
+
+  analyzeQueryContext(query) {
+    const queryLower = query.toLowerCase();
+    const companyKeywords = {
+      'openai': ['openai', 'open ai', 'gpt-4', 'gpt-3', 'chatgpt', 'dall-e', 'whisper'],
+      'anthropic': ['anthropic', 'claude'],
+      'google': ['google', 'deepmind', 'gemini', 'palm', 'bard'],
+      'meta': ['meta', 'facebook', 'llama'],
+      'microsoft': ['microsoft', 'copilot', 'bing ai'],
+      'mistral': ['mistral'],
+      'cohere': ['cohere']
+    };
+
+    for (const [company, keywords] of Object.entries(companyKeywords)) {
+      if (keywords.some(keyword => queryLower.includes(keyword))) {
+        return { focusCompany: company, isCompanySpecific: true };
+      }
+    }
+
+    return { focusCompany: null, isCompanySpecific: false };
   }
 
   getAnalysisConfig(depth, query, searchResults) {
     const sourceTypes = this.categorizeSourceTypes(searchResults.results);
     const timeContext = this.getTemporalContext();
     const confidenceFactors = this.calculateConfidenceFactors(searchResults);
+    const queryContext = this.analyzeQueryContext(query);
     
     const baseAnalysis = {
-      strategic: this.generateStrategicAnalysis(query, sourceTypes, timeContext),
-      technical: this.generateTechnicalAnalysis(query, sourceTypes, timeContext),
-      market: this.generateMarketAnalysis(query, sourceTypes, timeContext),
-      comprehensive: this.generateComprehensiveAnalysis(query, sourceTypes, timeContext)
+      strategic: this.generateStrategicAnalysis(query, sourceTypes, timeContext, queryContext),
+      technical: this.generateTechnicalAnalysis(query, sourceTypes, timeContext, queryContext),
+      market: this.generateMarketAnalysis(query, sourceTypes, timeContext, queryContext),
+      comprehensive: this.generateComprehensiveAnalysis(query, sourceTypes, timeContext, queryContext)
     };
 
     return baseAnalysis[depth] || baseAnalysis.strategic;
@@ -395,18 +384,18 @@ class AIIntelligenceService {
         </ul>
       </div>`,
       insights: [
-        `Market Leadership Dynamics: OpenAI's GPT-4o and Anthropic's Claude 3.5 Sonnet dominate enterprise adoption, while Meta's Llama 3.1 405B open-source release challenges proprietary model dominance. Google's Gemini 1.5 Pro gains traction in multimodal applications with 1M token context window capabilities.`,
-        `Innovation Acceleration Patterns: Model release cycles accelerated to 3-4 month intervals, with OpenAI's GPT-4o achieving 50% cost reduction over GPT-4 Turbo while Anthropic's Constitutional AI approach demonstrates superior safety alignment in enterprise deployments.`,
-        `Regulatory Landscape Evolution: EU AI Act implementation forces compliance modifications across major providers - Google DeepMind updating Gemini deployment protocols, while Mistral AI positions as GDPR-compliant European alternative to US models.`,
-        `Enterprise Adoption Strategies: Fortune 500 companies including Microsoft (GPT-4 integration), Salesforce (Einstein with Cohere), and Adobe (Firefly with custom models) demonstrate production-scale implementations with measurable ROI and operational integration.`,
-        `Investment Flow Patterns: Anthropic's $2.75B Series C (led by Andreessen Horowitz), Mistral AI's $640M Series B (Sequoia Capital), and Cohere's enterprise partnerships indicate capital concentration in companies with proven enterprise traction and regulatory compliance capabilities.`
+        `Market Leadership Dynamics: [PLACEHOLDER] Analysis of ${query} market positioning and competitive landscape. Live data will show actual company market shares, adoption rates, and competitive positioning.`,
+        `Innovation Acceleration Patterns: [PLACEHOLDER] Technology development trends for ${query}. Real analysis will include specific release cycles, performance improvements, and technical breakthroughs.`,
+        `Regulatory Landscape Evolution: [PLACEHOLDER] Policy and compliance developments affecting ${query}. Live data will show actual regulatory changes and compliance requirements.`,
+        `Enterprise Adoption Strategies: [PLACEHOLDER] Business implementation patterns for ${query}. Real data will include specific enterprise deployments and ROI metrics.`,
+        `Investment Flow Patterns: [PLACEHOLDER] Funding and investment trends in ${query} sector. Live analysis will show actual funding rounds and investment patterns.`
       ],
       trends: [
-        `Enterprise Platform Integration: Microsoft Copilot (GPT-4), Google Workspace AI (Gemini), and Salesforce Einstein (multiple providers) demonstrate native integration replacing standalone AI tools with embedded intelligence across productivity workflows.`,
-        `Open Source Model Democratization: Meta's Llama 3.1 405B, Mistral AI's open models, and Hugging Face ecosystem enable smaller organizations to deploy GPT-4 class capabilities using commodity hardware and cloud inference.`,
-        `Domain-Specific Model Specialization: Harvey (legal), GitHub Copilot (coding), Jasper (marketing), and Runway (creative) outperform general models in specialized tasks, indicating market segmentation beyond foundation model providers.`,
-        `Multi-Regional Compliance Architecture: Anthropic's Constitutional AI, Mistral's EU-first approach, and Google's region-specific Gemini deployments create compliance-first architectures for global enterprise adoption.`,
-        `Enterprise AI Talent Acquisition: Companies hiring Chief AI Officers, AI Product Managers, and MLOps engineers with practical deployment experience over academic researchers, driving salary premiums of 40-60% above traditional tech roles.`
+        `Platform Integration Trend: [PLACEHOLDER] How ${query} integrates with existing enterprise platforms. Live data will show actual integration patterns and platform adoptions.`,
+        `Democratization Trend: [PLACEHOLDER] Accessibility developments in ${query} technology. Real analysis will include open-source releases and cost reduction trends.`,
+        `Specialization Trend: [PLACEHOLDER] Domain-specific applications of ${query}. Live data will show sector-specific implementations and use cases.`,
+        `Compliance Trend: [PLACEHOLDER] Regulatory compliance developments for ${query}. Real analysis will include multi-regional compliance requirements.`,
+        `Talent Market Trend: [PLACEHOLDER] Workforce and skills developments in ${query} sector. Live data will show hiring patterns and skill requirements.`
       ],
       implications: [
         `Strategic Planning Imperative: Organizations must develop comprehensive ${query} strategies spanning technology adoption, workforce development, and competitive positioning within 12-18 month timeframes to maintain market relevance.`,
@@ -441,9 +430,9 @@ class AIIntelligenceService {
     };
   }
 
-  generateTechnicalAnalysis(query, sourceTypes, timeContext) {
-    const technicalMetrics = this.generateTechnicalMetrics();
-    const architectureSpecs = this.generateArchitectureSpecs();
+  generateTechnicalAnalysis(query, sourceTypes, timeContext, queryContext) {
+    const technicalMetrics = this.generateTechnicalMetrics(queryContext);
+    const architectureSpecs = this.generateArchitectureSpecs(queryContext);
     const performanceData = this.generatePerformanceMetrics();
     
     return {
@@ -515,33 +504,32 @@ class AIIntelligenceService {
         <p>This enables organizations to move from <em>experimental deployments</em> to <strong>production-scale implementations</strong> supporting mission-critical business processes.</p>
       </div>`,
       insights: [
-        `Neural Architecture Innovations: ${architectureSpecs.company}'s ${technicalMetrics.selectedModel.name} (${technicalMetrics.parameterCount}B parameters) utilizes ${architectureSpecs.features.join(' and ')} achieving ${technicalMetrics.contextLength} context length. OpenAI's GPT-4o implements multimodal attention fusion, while Meta's Llama 3.1 405B demonstrates RoPE positional embeddings enabling extended sequence processing with ${performanceData.memoryReduction}% memory efficiency gains.`,
-        `Distributed Inference Optimization: ${technicalMetrics.selectedModel.company} deploys ${technicalMetrics.selectedModel.name} across ${technicalMetrics.trainingNodes} nodes using ${technicalMetrics.framework} with ${performanceData.scalingEfficiency}% scaling efficiency. Anthropic's Claude 3.5 Sonnet implements Constitutional AI training requiring specialized distributed protocols, while Google's TPU v5e pods enable Gemini 1.5 Pro inference at ${technicalMetrics.inferenceSpeed} tokens/second.`,
-        `Edge Computing Deployment: Model compression techniques enable deployment of ${technicalMetrics.selectedModel.name}-derived models on edge devices. Meta's Llama 3.1 8B variant achieves ${performanceData.accuracyRetention}% retention of 405B model performance while requiring only ${technicalMetrics.minGpuMemory}GB VRAM. Apple's Neural Engine and Google's Tensor Processing Units provide hardware acceleration for ${performanceData.edgeLatency}ms inference latency.`,
-        `Security Implementation: Homomorphic encryption enabling computation on encrypted data with ${technicalMetrics.encryptionOverhead}% computational overhead. Differential privacy implementation with ε=${technicalMetrics.privacyBudget} privacy budget ensuring mathematical privacy guarantees. Secure multi-party computation protocols enabling federated learning with ${performanceData.privacyPreservation}% privacy preservation.`,
-        `Infrastructure Optimization: Kubernetes-native deployment with custom resource definitions (CRDs) enabling auto-scaling based on queue depth and GPU utilization. Container optimization reducing image size by ${performanceData.containerOptimization}% through multi-stage builds and distroless base images. Service mesh implementation with Istio providing ${performanceData.serviceLatency}ms service-to-service communication latency.`
+        `Technical Innovation 1: [PLACEHOLDER] Architecture and performance details for ${query}. Live data will show actual model specifications and benchmarks.`,
+        `Technical Innovation 2: [PLACEHOLDER] Infrastructure and deployment details for ${query}. Real analysis will include specific hardware and software requirements.`,
+        `Technical Innovation 3: [PLACEHOLDER] Optimization and efficiency improvements for ${query}. Live data will show actual performance metrics and optimizations.`,
+        `Technical Innovation 4: [PLACEHOLDER] Security and privacy implementations for ${query}. Real analysis will include specific security protocols and compliance measures.`
       ],
       trends: [
-        `Mixture of Experts Evolution: Google's Gemini 1.5 Pro MoE architecture achieves ${technicalMetrics.expertEfficiency}% parameter efficiency compared to dense models. OpenAI's GPT-4o implements sparse expert routing, while PaLM 2's Pathways architecture demonstrates distributed expert activation across TPU pods. Vector databases like Pinecone and Weaviate enable RAG implementations achieving ${performanceData.retrievalAccuracy}% retrieval accuracy.`,
-        `Quantization and Compression: NVIDIA's FP8 training and Intel's INT4 inference enable ${performanceData.quantizedSpeedup}x speedup while maintaining ${performanceData.quantizedAccuracy}% accuracy. Meta's Llama 3.1 quantized variants and Microsoft's Olive optimization toolkit reduce deployment costs by ${performanceData.sizeReduction}% for edge and mobile applications.`,
-        `Hardware-Software Co-optimization: NVIDIA H100 GPUs with Transformer Engine, Google TPU v5e, and AWS Trainium chips provide specialized AI acceleration. OpenAI's Triton compiler and Google's XLA optimize kernel performance achieving ${performanceData.kernelSpeedup}x speedup. Custom silicon from Cerebras (CS-3) and SambaNova enables large-scale model training with ${technicalMetrics.asicPerformance} TOPS/W efficiency.`,
-        `Multi-Modal Architecture Integration: OpenAI's GPT-4o Vision, Google's Gemini 1.5 Pro, and Anthropic's Claude 3.5 Sonnet process text, images, and audio simultaneously. Meta's ImageBind and OpenAI's DALL-E 3 integration demonstrate cross-modal understanding achieving ${performanceData.multimodalAccuracy}% accuracy across ${technicalMetrics.modalityTypes} modalities with ${performanceData.processingLatency}ms latency.`,
-        `Production MLOps Advancement: Weights & Biases MLOps platform, Hugging Face Model Hub, and MLflow enable ${performanceData.deploymentFrequency} daily deployments. Seldon Core and KServe provide Kubernetes-native serving with ${performanceData.rollbackTime}s rollback capabilities. Evidently AI and Fiddler Labs offer drift detection achieving ${performanceData.driftDetection}% accuracy in production monitoring.`
+        `Architecture Evolution Trend: [PLACEHOLDER] Model architecture developments for ${query}. Live data will show actual architectural innovations and efficiency improvements.`,
+        `Optimization Trend: [PLACEHOLDER] Performance optimization trends for ${query}. Real analysis will include specific compression and acceleration techniques.`,
+        `Hardware Integration Trend: [PLACEHOLDER] Hardware-software co-optimization for ${query}. Live data will show actual hardware partnerships and custom silicon developments.`,
+        `Multi-Modal Trend: [PLACEHOLDER] Multi-modal capability developments for ${query}. Real analysis will include specific multi-modal implementations and performance metrics.`,
+        `MLOps Advancement Trend: [PLACEHOLDER] Production deployment trends for ${query}. Live data will show actual MLOps tools and deployment patterns.`
       ],
       implications: [
-        `Infrastructure Scaling Requirements: Organizations need GPU clusters with ${technicalMetrics.minGpuMemory}GB memory per node, NVLink/InfiniBand interconnects supporting ${technicalMetrics.bandwidth}GB/s bandwidth, and distributed storage systems with ${technicalMetrics.iopsRequirement} IOPS for model checkpointing and data pipeline optimization.`,
-        `Technical Expertise Specialization: Teams require deep expertise in CUDA programming, distributed computing with NCCL/Horovod, transformer architecture optimization, and proficiency in frameworks like DeepSpeed, FairScale, and Megatron for large-scale model training achieving ${performanceData.trainingEfficiency}% training efficiency.`,
-        `Performance Engineering: Implementation requires systematic optimization including gradient accumulation, mixed precision training, and communication-computation overlap achieving ${performanceData.overlapEfficiency}% overlap efficiency. Memory optimization through activation checkpointing and ZeRO optimizer states reducing memory usage by ${performanceData.memoryReduction}%.`,
-        `Security Architecture: Enterprise deployment necessitates implementation of TLS 1.3 for data in transit, AES-256 encryption for data at rest, and hardware security modules (HSMs) for key management. Threat modeling required for adversarial attack vectors including model inversion, membership inference, and prompt injection attacks.`,
-        `Operational Excellence: Production systems require comprehensive telemetry including GPU utilization monitoring, model performance metrics tracking (P95 latency: ${performanceData.p95Latency}ms), and automated alerting for anomaly detection. Implementation of circuit breakers and graceful degradation patterns for ${performanceData.availabilityTarget}% uptime SLA.`
+        `Infrastructure Requirements: [PLACEHOLDER] Hardware and infrastructure needs for ${query}. Live data will show actual GPU, memory, and networking requirements.`,
+        `Technical Expertise: [PLACEHOLDER] Skills and expertise requirements for ${query}. Real analysis will include specific technical competencies and training needs.`,
+        `Performance Engineering: [PLACEHOLDER] Optimization requirements for ${query}. Live data will show actual performance engineering practices and efficiency metrics.`,
+        `Security Architecture: [PLACEHOLDER] Security considerations for ${query}. Real analysis will include specific security protocols and threat models.`,
+        `Operational Excellence: [PLACEHOLDER] Production requirements for ${query}. Live data will show actual monitoring, alerting, and SLA requirements.`
       ],
       technicalDetails: [
-        `Model Architecture: ${architectureSpecs.modelType} with ${technicalMetrics.layers} transformer layers, ${technicalMetrics.attentionHeads} attention heads, ${technicalMetrics.hiddenSize} hidden dimensions. Positional encoding using RoPE (Rotary Position Embedding) with base frequency ${technicalMetrics.ropeBase}. Layer normalization: RMSNorm with epsilon ${technicalMetrics.layerNormEps}.`,
-        `Training Infrastructure: Distributed training across ${technicalMetrics.trainingNodes} nodes using ZeRO-3 optimizer state partitioning. Gradient compression with ${technicalMetrics.compressionRatio}:1 ratio. Learning rate scheduling: cosine annealing with warmup steps ${technicalMetrics.warmupSteps}. Batch size: ${technicalMetrics.batchSize} with gradient accumulation steps ${technicalMetrics.gradAccumSteps}.`,
-        `Inference Optimization: Model serving using TensorRT with FP16 precision achieving ${performanceData.tensorrtSpeedup}x speedup. KV-cache optimization reducing memory usage by ${performanceData.kvCacheOptimization}%. Beam search with beam width ${technicalMetrics.beamWidth} and length penalty ${technicalMetrics.lengthPenalty}.`,
-        `Deployment Architecture: Kubernetes deployment with custom operators managing ${technicalMetrics.replicaCount} replicas. Horizontal Pod Autoscaler (HPA) scaling based on custom metrics (GPU memory utilization, queue depth). Service mesh with Envoy proxy providing load balancing and ${performanceData.circuitBreakerLatency}ms circuit breaker response.`,
-        `Data Pipeline: Real-time data ingestion using Apache Kafka with ${technicalMetrics.kafkaPartitions} partitions and ${technicalMetrics.retentionHours}h retention. Vector database (Pinecone/Weaviate) with ${technicalMetrics.vectorDimensions} dimensions and ${technicalMetrics.indexShards} index shards. Embedding model: ${technicalMetrics.embeddingModel} achieving ${performanceData.embeddingLatency}ms embedding latency.`,
-        `Monitoring Stack: Prometheus metrics collection with ${technicalMetrics.metricsRetention}d retention. Grafana dashboards tracking ${technicalMetrics.kpiCount} KPIs including model drift, prediction confidence distribution, and resource utilization. Jaeger distributed tracing with ${technicalMetrics.tracingSampleRate}% sampling rate for request tracing.`
+        `Model Architecture: [PLACEHOLDER] Technical architecture details for ${query}. Live data will show actual model specifications and parameters.`,
+        `Training Infrastructure: [PLACEHOLDER] Training setup details for ${query}. Real analysis will include specific training configurations and infrastructure.`,
+        `Inference Optimization: [PLACEHOLDER] Inference optimization techniques for ${query}. Live data will show actual optimization methods and performance gains.`,
+        `Deployment Architecture: [PLACEHOLDER] Deployment configuration for ${query}. Real analysis will include specific deployment patterns and scaling strategies.`,
+        `Data Pipeline: [PLACEHOLDER] Data processing pipeline for ${query}. Live data will show actual data ingestion and processing workflows.`,
+        `Monitoring Stack: [PLACEHOLDER] Monitoring and observability for ${query}. Real analysis will include specific monitoring tools and metrics.`
       ],
       marketAnalysis: {
         size: `Technical infrastructure market growing at ${Math.floor(Math.random() * 25 + 20)}% annually`,
@@ -563,17 +551,16 @@ class AIIntelligenceService {
       ],
       confidence: 0.89,
       technicalSpecifications: {
-        modelName: technicalMetrics.selectedModel.name,
-        company: technicalMetrics.selectedModel.company,
-        modelArchitecture: architectureSpecs.modelType,
-        parameters: `${technicalMetrics.parameterCount}B`,
+        modelName: technicalMetrics.modelName,
+        company: technicalMetrics.company,
+        modelArchitecture: architectureSpecs.modelArchitecture,
+        parameters: technicalMetrics.parameterCount,
         contextLength: technicalMetrics.contextLength,
         trainingFramework: technicalMetrics.framework,
-        inferenceLatency: `${performanceData.inferenceLatency}ms`,
-        throughput: `${performanceData.throughput} requests/sec`,
-        gpuRequirements: `${technicalMetrics.minGpuMemory}GB VRAM minimum`,
-        powerConsumption: `${performanceData.powerConsumption}W`,
-        accuracy: `${performanceData.accuracy}% on benchmark datasets`,
+        inferenceLatency: performanceData.inferenceLatency,
+        throughput: performanceData.throughput,
+        gpuRequirements: technicalMetrics.gpuMemory,
+        accuracy: performanceData.accuracy,
         embeddingModel: technicalMetrics.embeddingModel,
         features: architectureSpecs.features
       }
@@ -841,116 +828,37 @@ class AIIntelligenceService {
     };
   }
 
-  generateTechnicalMetrics() {
-    const realModels = [
-      { name: 'GPT-4o', params: 175, company: 'OpenAI', context: '128K' },
-      { name: 'Claude 3.5 Sonnet', params: 200, company: 'Anthropic', context: '200K' },
-      { name: 'Gemini 1.5 Pro', params: 280, company: 'Google', context: '1M' },
-      { name: 'Llama 3.1 405B', params: 405, company: 'Meta', context: '128K' },
-      { name: 'GPT-4 Turbo', params: 175, company: 'OpenAI', context: '128K' }
-    ];
-    
-    const selectedModel = realModels[Math.floor(Math.random() * realModels.length)];
-    
+  generateTechnicalMetrics(queryContext) {
     return {
-      selectedModel: selectedModel,
-      parameterCount: selectedModel.params,
-      contextLength: selectedModel.context,
-      layers: selectedModel.params > 300 ? 96 : selectedModel.params > 150 ? 80 : 64,
-      attentionHeads: selectedModel.params > 300 ? 128 : selectedModel.params > 150 ? 96 : 64,
-      hiddenSize: selectedModel.params > 300 ? 14336 : selectedModel.params > 150 ? 12288 : 8192,
-      nodeCount: Math.floor(Math.random() * 512 + 8),
-      inferenceSpeed: selectedModel.company === 'OpenAI' ? 1850 : selectedModel.company === 'Anthropic' ? 1650 : 1420,
-      encryptionOverhead: Math.floor(Math.random() * 15 + 5),
-      privacyBudget: (Math.random() * 0.8 + 0.1).toFixed(1),
-      expertEfficiency: Math.floor(Math.random() * 30 + 60),
-      asicPerformance: Math.floor(Math.random() * 800 + 200),
-      modalityTypes: selectedModel.name.includes('GPT-4o') || selectedModel.name.includes('Gemini') ? 5 : 3,
-      minGpuMemory: selectedModel.params > 300 ? 80 : selectedModel.params > 150 ? 40 : 24,
-      bandwidth: Math.floor(Math.random() * 1600 + 400),
-      iopsRequirement: Math.floor(Math.random() * 900000 + 100000),
-      ropeBase: selectedModel.company === 'Meta' ? 500000 : 10000,
-      layerNormEps: '1e-' + Math.floor(Math.random() * 3 + 5),
-      trainingNodes: selectedModel.params > 300 ? 16384 : selectedModel.params > 150 ? 1024 : 256,
-      compressionRatio: Math.floor(Math.random() * 20 + 5),
-      warmupSteps: Math.floor(Math.random() * 4000 + 1000),
-      batchSize: selectedModel.params > 300 ? 32 : selectedModel.params > 150 ? 64 : 128,
-      gradAccumSteps: Math.floor(Math.random() * 16 + 4),
-      beamWidth: Math.floor(Math.random() * 8 + 2),
-      lengthPenalty: (Math.random() * 1.5 + 0.5).toFixed(1),
-      replicaCount: Math.floor(Math.random() * 20 + 3),
-      kafkaPartitions: Math.floor(Math.random() * 96 + 4),
-      retentionHours: Math.floor(Math.random() * 336 + 24),
-      vectorDimensions: selectedModel.company === 'OpenAI' ? 1536 : selectedModel.company === 'Anthropic' ? 1024 : 768,
-      indexShards: Math.floor(Math.random() * 16 + 4),
-      embeddingModel: selectedModel.company === 'OpenAI' ? 'text-embedding-3-large' : selectedModel.company === 'Anthropic' ? 'voyage-large-2' : 'textembedding-gecko-003',
-      metricsRetention: Math.floor(Math.random() * 60 + 30),
-      kpiCount: Math.floor(Math.random() * 40 + 20),
-      tracingSampleRate: Math.floor(Math.random() * 10 + 1),
-      framework: selectedModel.company === 'Meta' ? 'PyTorch' : selectedModel.company === 'Google' ? 'JAX' : 'PyTorch'
+      modelName: '[PLACEHOLDER MODEL]',
+      company: '[PLACEHOLDER COMPANY]',
+      parameterCount: 'XXX',
+      contextLength: 'XXK',
+      framework: 'PyTorch/JAX/TensorFlow',
+      inferenceSpeed: 'XXX tokens/sec',
+      gpuMemory: 'XXG VRAM',
+      embeddingModel: '[PLACEHOLDER EMBEDDING]'
     };
   }
 
-  generateArchitectureSpecs() {
-    const realArchitectures = [
-      { name: 'GPT-4o Transformer', type: 'Decoder-only', company: 'OpenAI', features: ['Multi-modal attention', 'Sparse expert routing'] },
-      { name: 'Claude 3.5 Constitutional AI', type: 'Decoder-only', company: 'Anthropic', features: ['Constitutional training', 'Chain-of-thought reasoning'] },
-      { name: 'Gemini 1.5 Pro MoE', type: 'Mixture-of-Experts', company: 'Google', features: ['Sparse attention', 'Long-context memory'] },
-      { name: 'Llama 3.1 405B', type: 'Decoder-only', company: 'Meta', features: ['RoPE embeddings', 'Group Query Attention'] },
-      { name: 'PaLM 2 Pathways', type: 'Encoder-Decoder', company: 'Google', features: ['Pathways architecture', 'Multi-domain training'] }
-    ];
-    
-    const selectedArch = realArchitectures[Math.floor(Math.random() * realArchitectures.length)];
-    
+  generateArchitectureSpecs(queryContext) {
     return {
-      primaryArchitecture: selectedArch.name,
-      modelArchitecture: selectedArch.type,
-      modelType: `${selectedArch.company} ${selectedArch.name}`,
-      features: selectedArch.features,
-      company: selectedArch.company
+      primaryArchitecture: '[PLACEHOLDER ARCHITECTURE]',
+      modelArchitecture: '[PLACEHOLDER TYPE]',
+      modelType: '[PLACEHOLDER MODEL TYPE]',
+      features: ['[PLACEHOLDER FEATURE 1]', '[PLACEHOLDER FEATURE 2]'],
+      company: '[PLACEHOLDER COMPANY]'
     };
   }
 
   generatePerformanceMetrics() {
     return {
-      latencyReduction: Math.floor(Math.random() * 40 + 30), // 30-70%
-      throughputIncrease: Math.floor(Math.random() * 150 + 50), // 50-200%
-      memoryOptimization: Math.floor(Math.random() * 35 + 25), // 25-60%
-      memoryReduction: Math.floor(Math.random() * 50 + 30), // 30-80%
-      scalingEfficiency: Math.floor(Math.random() * 15 + 80), // 80-95%
-      communicationReduction: Math.floor(Math.random() * 30 + 40), // 40-70%
-      batchUtilization: Math.floor(Math.random() * 15 + 85), // 85-100%
-      modelSize: Math.floor(Math.random() * 70 + 80) + '%', // 80-150% (size reduction)
-      accuracyRetention: Math.floor(Math.random() * 5 + 95), // 95-100%
-      edgeLatency: Math.floor(Math.random() * 150 + 50), // 50-200ms
-      powerConsumption: Math.floor(Math.random() * 80 + 20), // 20-100W
-      privacyPreservation: Math.floor(Math.random() * 5 + 95), // 95-100%
-      containerOptimization: Math.floor(Math.random() * 60 + 40), // 40-100%
-      serviceLatency: Math.floor(Math.random() * 8 + 2), // 2-10ms
-      retrievalAccuracy: Math.floor(Math.random() * 10 + 85), // 85-95%
-      factualAccuracy: Math.floor(Math.random() * 20 + 15), // 15-35%
-      quantizedAccuracy: Math.floor(Math.random() * 5 + 95), // 95-100%
-      quantizedSpeedup: Math.floor(Math.random() * 6 + 2), // 2-8x
-      sizeReduction: Math.floor(Math.random() * 60 + 40), // 40-100%
-      memoryFootprint: Math.floor(Math.random() * 40 + 30), // 30-70%
-      kernelSpeedup: Math.floor(Math.random() * 8 + 2), // 2-10x
-      multimodalAccuracy: Math.floor(Math.random() * 10 + 85), // 85-95%
-      processingLatency: Math.floor(Math.random() * 800 + 200), // 200-1000ms
-      deploymentFrequency: Math.floor(Math.random() * 15 + 5), // 5-20 per day
-      rollbackTime: Math.floor(Math.random() * 25 + 5), // 5-30s
-      driftDetection: Math.floor(Math.random() * 10 + 85), // 85-95%
-      alertLatency: Math.floor(Math.random() * 450 + 50), // 50-500ms
-      trainingEfficiency: Math.floor(Math.random() * 20 + 70), // 70-90%
-      overlapEfficiency: Math.floor(Math.random() * 15 + 80), // 80-95%
-      p95Latency: Math.floor(Math.random() * 150 + 50), // 50-200ms
-      availabilityTarget: '99.9', // Standard SLA
-      tensorrtSpeedup: Math.floor(Math.random() * 6 + 2), // 2-8x
-      kvCacheOptimization: Math.floor(Math.random() * 30 + 20), // 20-50%
-      circuitBreakerLatency: Math.floor(Math.random() * 8 + 2), // 2-10ms
-      embeddingLatency: Math.floor(Math.random() * 45 + 5), // 5-50ms
-      inferenceLatency: Math.floor(Math.random() * 150 + 50), // 50-200ms
-      throughput: Math.floor(Math.random() * 8000 + 2000), // 2000-10000 req/sec
-      accuracy: Math.floor(Math.random() * 8 + 92) // 92-100%
+      latencyReduction: 'XX%',
+      throughputIncrease: 'XX%',
+      memoryOptimization: 'XX%',
+      inferenceLatency: 'XXXms',
+      throughput: 'XXX req/sec',
+      accuracy: 'XX%'
     };
   }
 }
