@@ -1141,14 +1141,24 @@
                             <h3>🔧 Technical Specifications</h3>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
                                 <div class="insight-card">
-                                    <h4>Architecture</h4>
-                                    <p><strong>Type:</strong> ${baseAnalysis.technicalSpecifications.modelArchitecture}</p>
+                                    <h4>Model Details</h4>
+                                    <p><strong>Model:</strong> ${baseAnalysis.technicalSpecifications.modelName}</p>
+                                    <p><strong>Company:</strong> ${baseAnalysis.technicalSpecifications.company}</p>
                                     <p><strong>Parameters:</strong> ${baseAnalysis.technicalSpecifications.parameters}</p>
+                                    <p><strong>Context:</strong> ${baseAnalysis.technicalSpecifications.contextLength}</p>
                                 </div>
                                 <div class="insight-card">
-                                    <h4>Performance</h4>
+                                    <h4>Performance Metrics</h4>
                                     <p><strong>Latency:</strong> ${baseAnalysis.technicalSpecifications.inferenceLatency}</p>
                                     <p><strong>Throughput:</strong> ${baseAnalysis.technicalSpecifications.throughput}</p>
+                                    <p><strong>GPU Requirements:</strong> ${baseAnalysis.technicalSpecifications.gpuRequirements}</p>
+                                </div>
+                                <div class="insight-card">
+                                    <h4>Architecture Features</h4>
+                                    <p><strong>Type:</strong> ${baseAnalysis.technicalSpecifications.modelArchitecture}</p>
+                                    <p><strong>Framework:</strong> ${baseAnalysis.technicalSpecifications.trainingFramework}</p>
+                                    <p><strong>Embedding:</strong> ${baseAnalysis.technicalSpecifications.embeddingModel}</p>
+                                    ${baseAnalysis.technicalSpecifications.features ? `<p><strong>Features:</strong> ${baseAnalysis.technicalSpecifications.features.join(', ')}</p>` : ''}
                                 </div>
                             </div>
                         </div>
