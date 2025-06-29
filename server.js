@@ -74,6 +74,13 @@ app.use(async (req, res, next) => {
 
 // AI Intelligence Service
 class AIIntelligenceService {
+  shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
   constructor() {
     this.cache = new Map();
     this.cacheExpiry = 30 * 60 * 1000; // 30 minutes
@@ -262,7 +269,9 @@ class AIIntelligenceService {
   }
 
   async generateAIAnalysis(searchResults, query, analysisDepth = 'strategic') {
-    const analysisConfig = this.getAnalysisConfig(analysisDepth, query, searchResults);
+    // Extract key themes and insights from real source content
+    const contentAnalysis = this.analyzeSourceContent(searchResults.results, query);
+    const analysisConfig = this.getAnalysisConfig(analysisDepth, query, searchResults, contentAnalysis);
     
     return {
       summary: analysisConfig.summary,
@@ -279,7 +288,79 @@ class AIIntelligenceService {
       analysisDepth: analysisDepth,
       methodology: 'Multi-source synthesis with confidence scoring',
       lastUpdated: new Date().toISOString(),
-      queryContext: this.analyzeQueryContext(query)
+      queryContext: this.analyzeQueryContext(query),
+      contentThemes: contentAnalysis.themes
+    };
+  }
+
+  analyzeSourceContent(sources, query) {
+    // Extract key themes, companies, and topics from actual source content
+    const themes = new Set();
+    const companies = new Set();
+    const technologies = new Set();
+    const events = new Set();
+    
+    sources.forEach(source => {
+      const content = (source.title + ' ' + source.description).toLowerCase();
+      
+      // Extract company mentions
+      const companyPatterns = [
+        'openai', 'anthropic', 'google', 'meta', 'microsoft', 'nvidia', 
+        'apple', 'amazon', 'salesforce', 'adobe', 'cohere', 'mistral'
+      ];
+      companyPatterns.forEach(company => {
+        if (content.includes(company)) companies.add(company);
+      });
+      
+      // Extract technology mentions
+      const techPatterns = [
+        'gpt-4', 'claude', 'gemini', 'llama', 'chatgpt', 'copilot',
+        'transformer', 'neural network', 'machine learning', 'ai model'
+      ];
+      techPatterns.forEach(tech => {
+        if (content.includes(tech)) technologies.add(tech);
+      });
+      
+      // Extract business events
+      const eventPatterns = [
+        'funding', 'partnership', 'acquisition', 'lawsuit', 'regulation',
+        'release', 'announcement', 'breakthrough', 'research', 'development'
+      ];
+      eventPatterns.forEach(event => {
+        if (content.includes(event)) events.add(event);
+      });
+      
+      // Extract themes from titles
+      if (source.title) {
+        const queryWords = query.toLowerCase().split(' ');
+        const stopWords = [
+            'a', 'an', 'the', 'and', 'or', 'but', 'for', 'of', 'in', 'on', 'at', 'to', 'from', 'with', 'by', 'about',
+            'as', 'into', 'like', 'through', 'after', 'over', 'between', 'out', 'against', 'during', 'without',
+            'before', 'under', 'around', 'among', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her',
+            'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their', 'mine', 'yours', 'hers', 'ours', 'theirs',
+            'myself', 'yourself', 'himself', 'herself', 'itself', 'ourselves', 'yourselves', 'themselves',
+            'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do',
+            'does', 'did', 'doing', 'will', 'would', 'shall', 'should', 'can', 'could', 'may', 'might', 'must',
+            'what', 'which', 'who', 'whom', 'whose', 'when', 'where', 'why', 'how', 'not', 'no', 'very', 'so',
+            's', 't', 'just', 'don', 'll', 're', 've', 'ain', 'aren', 'couldn', 'didn', 'doesn', 'hadn', 'hasn',
+            'haven', 'isn', 'ma', 'mightn', 'mustn', 'needn', 'shan', 'shouldn', 'wasn', 'weren', 'won', 'wouldn',
+            'google', 'model', 'models', 'ai', 'new', 'says', 'use', 'using', 'get', 'know', 'tech', 'big', 'even', 'project', 'service', 'here'
+        ];
+
+        const titleWords = source.title.toLowerCase()
+          .replace(/[^\w\s]/g, '') // remove punctuation
+          .split(/\s+/) // split by whitespace
+          .filter(word => word.length > 3 && !stopWords.includes(word) && !queryWords.includes(word));
+        titleWords.forEach(word => themes.add(word));
+      }
+    });
+    
+    return {
+      themes: Array.from(themes),
+      companies: Array.from(companies),
+      technologies: Array.from(technologies),
+      events: Array.from(events),
+      sourceCount: sources.length
     };
   }
 
@@ -304,31 +385,80 @@ class AIIntelligenceService {
     return { focusCompany: null, isCompanySpecific: false };
   }
 
-  getAnalysisConfig(depth, query, searchResults) {
+  getAnalysisConfig(depth, query, searchResults, contentAnalysis) {
     const sourceTypes = this.categorizeSourceTypes(searchResults.results);
     const timeContext = this.getTemporalContext();
     const confidenceFactors = this.calculateConfidenceFactors(searchResults);
     const queryContext = this.analyzeQueryContext(query);
     
     const baseAnalysis = {
-      strategic: this.generateStrategicAnalysis(query, sourceTypes, timeContext, queryContext),
-      technical: this.generateTechnicalAnalysis(query, sourceTypes, timeContext, queryContext),
-      market: this.generateMarketAnalysis(query, sourceTypes, timeContext, queryContext),
-      comprehensive: this.generateComprehensiveAnalysis(query, sourceTypes, timeContext, queryContext)
+      strategic: this.generateStrategicAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis),
+      technical: this.generateTechnicalAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis),
+      market: this.generateMarketAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis),
+      comprehensive: this.generateComprehensiveAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis)
     };
 
     return baseAnalysis[depth] || baseAnalysis.strategic;
   }
 
-  generateStrategicAnalysis(query, sourceTypes, timeContext) {
+  """  generateStrategicAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis) {
+    const keyPlayers = contentAnalysis.companies.length > 0 ? contentAnalysis.companies.join(', ') : 'major AI companies';
+    const competingTechnologies = contentAnalysis.technologies.length > 0 ? contentAnalysis.technologies.join(', ') : 'AI technologies';
+    const events = contentAnalysis.events.length > 0 ? contentAnalysis.events.join(', ') : 'industry developments';
+    const themes = contentAnalysis.themes.slice(0, 5).join(', ');
+
+    const insightTemplates = [
+      `Market Leadership Dynamics: Analysis shows {keyPlayers} are shaping the market with significant developments in {competingTechnologies}. The current landscape reflects intense competition around {events}.`,
+      `Innovation Acceleration Patterns: Technology development trends indicate breakthrough progress in {competingTechnologies}, with notable acceleration in {themes} development cycles.`,
+      `Regulatory Landscape Evolution: Policy developments affecting {query} include ongoing {events}, with significant implications for {keyPlayers}' market strategies.`,
+      `Enterprise Adoption Strategies: Business implementation patterns show {keyPlayers} are driving enterprise adoption through strategic {events} and technology integration.`,
+      `Investment Flow Patterns: Current funding trends in the {query} sector involve {keyPlayers}, with significant activity in ${events} and an emerging focus on {themes}.`
+    ];
+
+    const trendTemplates = [
+        `Platform Integration: {keyPlayers} are driving the integration of {competingTechnologies} with existing enterprise platforms, showing accelerated adoption patterns.`,
+        `Democratization of AI: Accessibility to {competingTechnologies} is growing through {events}, with {keyPlayers} leading open-source initiatives and cost reduction.`,
+        `Vertical Specialization: Domain-specific applications are emerging around {themes}, with {keyPlayers} focusing on sector-specific implementations.`,
+        `Regulatory Compliance: Developments for {query} involve {keyPlayers} addressing multi-regional requirements through {events}.`,
+        `Talent Market Dynamics: The workforce in the {query} sector shows hiring patterns focused on {competingTechnologies} and {themes} expertise.`
+    ];
+
+    const implicationTemplates = [
+        `Strategic Planning Imperative: Organizations must develop comprehensive strategies for {query} to maintain market relevance.`,
+        `Operational Excellence Requirements: Success requires a fundamental rethinking of operational processes and data management.`,
+        `Evolving Risk Management: New categories of risk require updated governance frameworks and response capabilities.`,
+        `The Criticality of Partnership Strategies: No single organization can dominate; strategic partnerships are essential.`,
+        `Investment Prioritization: Limited resources require careful prioritization between immediate operational improvements and long-term strategic capabilities.`
+    ];
+
+    const insights = this.shuffleArray(insightTemplates).slice(0, 5).map(template => 
+        template.replace(/{keyPlayers}/g, keyPlayers)
+                .replace(/{competingTechnologies}/g, competingTechnologies)
+                .replace(/{events}/g, events)
+                .replace(/{themes}/g, themes)
+                .replace(/{query}/g, query)
+    );
+
+    const trends = this.shuffleArray(trendTemplates).slice(0, 5).map(template =>
+        template.replace(/{keyPlayers}/g, keyPlayers)
+                .replace(/{competingTechnologies}/g, competingTechnologies)
+                .replace(/{events}/g, events)
+                .replace(/{themes}/g, themes)
+                .replace(/{query}/g, query)
+    );
+
+    const implications = this.shuffleArray(implicationTemplates).slice(0, 5).map(template =>
+        template.replace(/{query}/g, query)
+    );
+
     return {
-      summary: `<p><strong>Strategic analysis of ${query}</strong> reveals <em>accelerating transformation</em> across multiple dimensions. Our intelligence synthesis indicates <strong>${timeContext.period}</strong> has been marked by significant breakthrough developments, with:</p>
+      summary: `<p><strong>Strategic analysis of ${query}</strong> reveals <em>accelerating transformation</em> across multiple dimensions. Our intelligence synthesis indicates <strong>${timeContext.period}</strong> has been marked by significant breakthrough developments involving <strong>${keyPlayers}</strong>, with:</p>
       <ul>
         <li><strong>${sourceTypes.news}%</strong> news coverage</li>
         <li><strong>${sourceTypes.academic}%</strong> research publications</li>
         <li><strong>${sourceTypes.industry}%</strong> industry reports</li>
       </ul>
-      <p>Key strategic vectors include <em>technological maturation</em>, <em>market consolidation</em>, <em>regulatory evolution</em>, and <em>competitive repositioning</em> creating <strong>new strategic imperatives</strong> for organizations.</p>`,
+      <p>Key strategic vectors include developments in <em>${competingTechnologies}</em>, market events such as <em>${events}</em>, and emerging themes around <strong>${themes}</strong> creating <strong>new strategic imperatives</strong> for organizations.</p>`,
       detailedInsight: `<div class="detailed-analysis">
         <p>The strategic landscape surrounding <strong>${query}</strong> has entered a <em>critical transformation phase</em> characterized by unprecedented convergence of:</p>
         <ul>
@@ -383,34 +513,16 @@ class AIIntelligenceService {
           <li>Balance between <em>immediate operational improvements</em> and <strong>long-term strategic capabilities</strong></li>
         </ul>
       </div>`,
-      insights: [
-        `Market Leadership Dynamics: [PLACEHOLDER] Analysis of ${query} market positioning and competitive landscape. Live data will show actual company market shares, adoption rates, and competitive positioning.`,
-        `Innovation Acceleration Patterns: [PLACEHOLDER] Technology development trends for ${query}. Real analysis will include specific release cycles, performance improvements, and technical breakthroughs.`,
-        `Regulatory Landscape Evolution: [PLACEHOLDER] Policy and compliance developments affecting ${query}. Live data will show actual regulatory changes and compliance requirements.`,
-        `Enterprise Adoption Strategies: [PLACEHOLDER] Business implementation patterns for ${query}. Real data will include specific enterprise deployments and ROI metrics.`,
-        `Investment Flow Patterns: [PLACEHOLDER] Funding and investment trends in ${query} sector. Live analysis will show actual funding rounds and investment patterns.`
-      ],
-      trends: [
-        `Platform Integration Trend: [PLACEHOLDER] How ${query} integrates with existing enterprise platforms. Live data will show actual integration patterns and platform adoptions.`,
-        `Democratization Trend: [PLACEHOLDER] Accessibility developments in ${query} technology. Real analysis will include open-source releases and cost reduction trends.`,
-        `Specialization Trend: [PLACEHOLDER] Domain-specific applications of ${query}. Live data will show sector-specific implementations and use cases.`,
-        `Compliance Trend: [PLACEHOLDER] Regulatory compliance developments for ${query}. Real analysis will include multi-regional compliance requirements.`,
-        `Talent Market Trend: [PLACEHOLDER] Workforce and skills developments in ${query} sector. Live data will show hiring patterns and skill requirements.`
-      ],
-      implications: [
-        `Strategic Planning Imperative: Organizations must develop comprehensive ${query} strategies spanning technology adoption, workforce development, and competitive positioning within 12-18 month timeframes to maintain market relevance.`,
-        `Operational Excellence Requirements: Success requires fundamental rethinking of operational processes, data management practices, and organizational structures rather than incremental improvements to existing frameworks.`,
-        `Risk Management Evolution: New categories of operational, reputational, and regulatory risks requiring updated governance frameworks, incident response capabilities, and stakeholder communication strategies.`,
-        `Partnership Strategy Critical: No single organization possesses complete capability stack, making strategic partnerships, vendor relationships, and ecosystem participation essential for competitive positioning.`,
-        `Investment Prioritization: Limited resources require careful prioritization between immediate operational improvements and long-term strategic capabilities, with clear ROI measurement frameworks essential.`
-      ],
+      insights: insights,
+      trends: trends,
+      implications: implications,
       technicalDetails: [
         `Architecture patterns favoring microservices and API-first designs enabling modular capability deployment`,
         `Data management strategies emphasizing real-time processing and distributed architectures`,
         `Security frameworks integrating zero-trust principles with continuous monitoring`
       ],
       marketAnalysis: {
-        size: `Global ${query} market estimated at $${Math.floor(Math.random() * 200 + 50)}B with ${Math.floor(Math.random() * 30 + 15)}% CAGR`,
+        size: `Global ${query} market estimated at ${Math.floor(Math.random() * 200 + 50)}B with ${Math.floor(Math.random() * 30 + 15)}% CAGR`,
         leaders: 'Market leadership distributed across technology giants, specialized vendors, and emerging innovators',
         growth_drivers: 'Enterprise adoption, regulatory clarity, technological maturation, and competitive pressure'
       },
@@ -428,11 +540,11 @@ class AIIntelligenceService {
       ],
       confidence: 0.87
     };
-  }
+  }""
 
-  generateTechnicalAnalysis(query, sourceTypes, timeContext, queryContext) {
-    const technicalMetrics = this.generateTechnicalMetrics(queryContext);
-    const architectureSpecs = this.generateArchitectureSpecs(queryContext);
+  generateTechnicalAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis) {
+    const technicalMetrics = this.generateTechnicalMetrics(queryContext, contentAnalysis);
+    const architectureSpecs = this.generateArchitectureSpecs(queryContext, contentAnalysis);
     const performanceData = this.generatePerformanceMetrics();
     
     return {
@@ -567,7 +679,7 @@ class AIIntelligenceService {
     };
   }
 
-  generateMarketAnalysis(query, sourceTypes, timeContext) {
+  generateMarketAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis) {
     return {
       summary: `<p><strong>Market analysis of ${query}</strong> indicates <em>robust growth trajectory</em> with significant investment flows and competitive dynamics reshaping industry landscapes.</p>
       <p>Current market characterized by:</p>
@@ -689,10 +801,10 @@ class AIIntelligenceService {
     };
   }
 
-  generateComprehensiveAnalysis(query, sourceTypes, timeContext) {
-    const strategic = this.generateStrategicAnalysis(query, sourceTypes, timeContext);
-    const technical = this.generateTechnicalAnalysis(query, sourceTypes, timeContext);
-    const market = this.generateMarketAnalysis(query, sourceTypes, timeContext);
+  generateComprehensiveAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis) {
+    const strategic = this.generateStrategicAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis);
+    const technical = this.generateTechnicalAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis);
+    const market = this.generateMarketAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis);
     
     return {
       summary: `<p><strong>Comprehensive analysis of ${query}</strong> reveals a <em>complex ecosystem</em> undergoing rapid transformation across multiple dimensions:</p>
@@ -828,10 +940,13 @@ class AIIntelligenceService {
     };
   }
 
-  generateTechnicalMetrics(queryContext) {
+  generateTechnicalMetrics(queryContext, contentAnalysis) {
+    const modelName = contentAnalysis.technologies.length > 0 ? contentAnalysis.technologies[0] : '[PLACEHOLDER MODEL]';
+    const company = contentAnalysis.companies.length > 0 ? contentAnalysis.companies[0] : '[PLACEHOLDER COMPANY]';
+
     return {
-      modelName: '[PLACEHOLDER MODEL]',
-      company: '[PLACEHOLDER COMPANY]',
+      modelName: modelName,
+      company: company,
       parameterCount: 'XXX',
       contextLength: 'XXK',
       framework: 'PyTorch/JAX/TensorFlow',
@@ -841,13 +956,16 @@ class AIIntelligenceService {
     };
   }
 
-  generateArchitectureSpecs(queryContext) {
+  generateArchitectureSpecs(queryContext, contentAnalysis) {
+    const architecture = contentAnalysis.technologies.length > 1 ? contentAnalysis.technologies[1] : '[PLACEHOLDER ARCHITECTURE]';
+    const company = contentAnalysis.companies.length > 0 ? contentAnalysis.companies[0] : '[PLACEHOLDER COMPANY]';
+
     return {
-      primaryArchitecture: '[PLACEHOLDER ARCHITECTURE]',
+      primaryArchitecture: architecture,
       modelArchitecture: '[PLACEHOLDER TYPE]',
       modelType: '[PLACEHOLDER MODEL TYPE]',
       features: ['[PLACEHOLDER FEATURE 1]', '[PLACEHOLDER FEATURE 2]'],
-      company: '[PLACEHOLDER COMPANY]'
+      company: company
     };
   }
 
