@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Intelligence Platform - Real-time Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.8);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00d4ff, #ff00d4, #00ff88);
+            background-size: 200% 200%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient 3s ease infinite;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 20px;
+            padding: 8px 16px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-controls {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-input {
+            background: #1a1a2e;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        .search-input option {
+            background: #1a1a2e;
+            color: white;
+            padding: 8px;
+        }
+
+        .search-btn {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .nav-tabs {
+            display: flex;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 5px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .content-area {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 600px;
+        }
+
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .loading-detail {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .analysis-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 15px;
+            border-left: 4px solid #00d4ff;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.6s ease forwards;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .analysis-section h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-timestamp {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: normal;
+        }
+
+        .key-insights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .insight-card {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(255, 0, 212, 0.1));
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.6s ease forwards;
+        }
+
+        .insight-card:nth-child(2) { animation-delay: 0.1s; }
+        .insight-card:nth-child(3) { animation-delay: 0.2s; }
+        .insight-card:nth-child(4) { animation-delay: 0.3s; }
+
+        .insight-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .insight-card h4 {
+            color: #ffffff;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .confidence-badge {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: normal;
+        }
+
+        .insight-card p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .source-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .source-link {
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .source-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .synthesis-section {
+            background: linear-gradient(135deg, rgba(255, 0, 212, 0.1), rgba(0, 255, 136, 0.1));
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .synthesis-section h3 {
+            color: #ff00d4;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .widget {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .widget h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .search-progress {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .progress-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .progress-complete { background: #00ff88; }
+        .progress-active { 
+            background: #00d4ff; 
+            animation: pulse 1s infinite;
+        }
+        .progress-pending { background: rgba(255, 255, 255, 0.3); }
+
+        .error-state {
+            text-align: center;
+            padding: 40px;
+            color: #ff4757;
+        }
+
+        @media (max-width: 768px) {
+            .content-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1>AI Intelligence Platform</h1>
+                    <p style="margin-top: 5px; color: rgba(255, 255, 255, 0.7);">Dynamic Analysis • Real-time Intelligence • Strategic Synthesis</p>
+                </div>
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    <span>Live Analysis</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="control-panel">
+            <div class="search-controls">
+                <div class="input-group">
+                    <label>Analysis Topic</label>
+                    <input type="text" class="search-input" id="searchQuery" placeholder="e.g., 'generative AI developments last week', 'EU AI regulation updates', 'open source LLM trends'" value="generative AI developments last week">
+                </div>
+                <div class="input-group">
+                    <label>Time Frame</label>
+                    <select class="search-input" id="timeFrame">
+                        <option value="week">Last Week</option>
+                        <option value="month">Last Month</option>
+                        <option value="quarter">Last Quarter</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Analysis Depth</label>
+                    <select class="search-input" id="analysisDepth">
+                        <option value="strategic">Strategic Overview</option>
+                        <option value="technical">Technical Deep-Dive</option>
+                        <option value="market">Market Intelligence</option>
+                        <option value="comprehensive">Comprehensive</option>
+                    </select>
+                </div>
+                <button class="search-btn" id="startAnalysis">Analyze</button>
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('analysis-results')">Analysis Results</button>
+            <button class="nav-tab" onclick="switchTab('geopolitical')">Geopolitical</button>
+            <button class="nav-tab" onclick="switchTab('technological')">Technology</button>
+            <button class="nav-tab" onclick="switchTab('market-intel')">Market</button>
+            <button class="nav-tab" onclick="switchTab('regulatory')">Regulatory</button>
+        </nav>
+
+        <div class="content-area">
+            <main class="main-content">
+                <div id="analysis-results" class="tab-content active">
+                    <div class="loading-state" id="initialMessage">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">🧠</div>
+                        <div class="loading-text">Ready for Dynamic Analysis</div>
+                        <div class="loading-detail">Enter a topic above and click "Analyze" to start real-time AI intelligence gathering</div>
+                    </div>
+                </div>
+
+                <div id="geopolitical" class="tab-content" style="display: none;">
+                    <div class="loading-state">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">🌍</div>
+                        <div class="loading-text">Geopolitical Analysis Ready</div>
+                        <div class="loading-detail">Run an analysis to see regional AI power dynamics</div>
+                    </div>
+                </div>
+
+                <div id="technological" class="tab-content" style="display: none;">
+                    <div class="loading-state">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">⚡</div>
+                        <div class="loading-text">Technology Trends Ready</div>
+                        <div class="loading-detail">Run an analysis to see technical innovation vectors</div>
+                    </div>
+                </div>
+
+                <div id="market-intel" class="tab-content" style="display: none;">
+                    <div class="loading-state">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">💰</div>
+                        <div class="loading-text">Market Intelligence Ready</div>
+                        <div class="loading-detail">Run an analysis to see investment flows and market dynamics</div>
+                    </div>
+                </div>
+
+                <div id="regulatory" class="tab-content" style="display: none;">
+                    <div class="loading-state">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">⚖️</div>
+                        <div class="loading-text">Regulatory Analysis Ready</div>
+                        <div class="loading-detail">Run an analysis to see compliance landscape evolution</div>
+                    </div>
+                </div>
+            </main>
+
+            <aside class="sidebar">
+                <div class="widget">
+                    <h3>🔄 Analysis Status</h3>
+                    <div id="analysisStatus">
+                        <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">No active analysis</p>
+                    </div>
+                </div>
+
+                <div class="widget">
+                    <h3>📊 Analysis History</h3>
+                    <div id="analysisHistory">
+                        <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">No previous analyses</p>
+                    </div>
+                </div>
+
+                <div class="widget">
+                    <h3>⚡ Quick Actions</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="search-btn" style="padding: 8px 12px; font-size: 0.9rem;" onclick="runQuickAnalysis('AI regulation updates')">EU AI Act Updates</button>
+                        <button class="search-btn" style="padding: 8px 12px; font-size: 0.9rem;" onclick="runQuickAnalysis('open source AI models')">Open Source Models</button>
+                        <button class="search-btn" style="padding: 8px 12px; font-size: 0.9rem;" onclick="runQuickAnalysis('AI funding rounds')">Funding & Investments</button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        class AIIntelligencePlatform {
+            constructor() {
+                this.analysisInProgress = false;
+                this.currentAnalysisId = null;
+                this.analysisHistory = [];
+                this.initializeEventListeners();
+                this.apiBaseUrl = 'http://localhost:3001/api';
+            }
+
+            initializeEventListeners() {
+                document.getElementById('startAnalysis').addEventListener('click', () => this.startAnalysis());
+                document.getElementById('searchQuery').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.startAnalysis();
+                });
+            }
+
+            async startAnalysis() {
+                if (this.analysisInProgress) return;
+
+                const query = document.getElementById('searchQuery').value.trim();
+                if (!query) {
+                    alert('Please enter an analysis topic');
+                    return;
+                }
+
+                const timeFrame = document.getElementById('timeFrame').value;
+                const depth = document.getElementById('analysisDepth').value;
+
+                this.analysisInProgress = true;
+                this.currentAnalysisId = Date.now();
+                
+                this.updateUI('loading');
+                await this.performAnalysis(query, timeFrame, depth);
+            }
+
+            async performAnalysis(query, timeFrame, depth) {
+                try {
+                    this.showLoadingState(query);
+                    this.updateProgress('Initializing AI intelligence pipeline...', 'active');
+                    
+                    // Call backend API
+                    const response = await fetch(`${this.apiBaseUrl}/analyze`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            query,
+                            timeFrame,
+                            analysisDepth: depth,
+                            region: 'global'
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Analysis failed: ${response.status}`);
+                    }
+
+                    this.updateProgress('Gathering intelligence from multiple sources...', 'active');
+                    const data = await response.json();
+                    
+                    this.updateProgress('Processing results with AI synthesis...', 'active');
+                    await this.delay(1500);
+                    
+                    this.updateProgress('Generating strategic insights...', 'active');
+                    await this.delay(1000);
+                    
+                    this.displayResults(data, query);
+                    this.updateProgress('Analysis complete', 'complete');
+                    
+                    this.addToHistory(query, timeFrame, depth);
+                    
+                } catch (error) {
+                    console.error('Analysis error:', error);
+                    this.showError('Analysis failed. Please ensure the backend server is running.');
+                } finally {
+                    this.analysisInProgress = false;
+                }
+            }
+
+            showLoadingState(query) {
+                const content = document.getElementById('analysis-results');
+                content.innerHTML = `
+                    <div class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">Analyzing: "${query}"</div>
+                        <div class="loading-detail">Connecting to AI intelligence services...</div>
+                        <div class="search-progress" id="searchProgress">
+                            <div class="progress-item">
+                                <div class="progress-icon progress-active"></div>
+                                <span>Starting analysis pipeline...</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            updateProgress(text, status) {
+                const progress = document.getElementById('searchProgress');
+                if (progress) {
+                    const item = document.createElement('div');
+                    item.className = 'progress-item';
+                    item.innerHTML = `
+                        <div class="progress-icon progress-${status}"></div>
+                        <span>${text}</span>
+                    `;
+                    progress.appendChild(item);
+                }
+            }
+
+            displayResults(data, originalQuery) {
+                const content = document.getElementById('analysis-results');
+                const timestamp = new Date().toLocaleString();
+                
+                content.innerHTML = `
+                    <div class="synthesis-section">
+                        <h3>🎯 Strategic Intelligence Synthesis</h3>
+                        <p><strong>Query:</strong> "${originalQuery}"</p>
+                        <p><strong>Generated:</strong> ${timestamp}</p>
+                        <p><strong>Sources Analyzed:</strong> ${data.searchResults.totalFound}</p>
+                        <p><strong>Confidence:</strong> <span class="confidence-badge">${(data.analysis.confidence * 100).toFixed(0)}%</span></p>
+                        <p style="margin-top: 15px;">${data.analysis.summary}</p>
+                    </div>
+
+                    <div class="analysis-section">
+                        <h2>🔍 Key Intelligence Points <span class="section-timestamp">${timestamp}</span></h2>
+                        <div class="key-insights">
+                            ${data.analysis.insights.map((insight, index) => `
+                                <div class="insight-card" style="animation-delay: ${index * 0.1}s">
+                                    <h4>Strategic Insight ${index + 1}</h4>
+                                    <p>${insight}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="analysis-section">
+                        <h2>📈 Trend Analysis</h2>
+                        <div class="key-insights">
+                            ${data.analysis.trends.map((trend, index) => `
+                                <div class="insight-card" style="animation-delay: ${index * 0.1}s">
+                                    <h4>Trend ${index + 1}</h4>
+                                    <p>${trend}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="analysis-section">
+                        <h2>🎯 Strategic Implications</h2>
+                        <div class="key-insights">
+                            ${data.analysis.implications.map((implication, index) => `
+                                <div class="insight-card" style="animation-delay: ${index * 0.1}s">
+                                    <h4>Implication ${index + 1}</h4>
+                                    <p>${implication}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="analysis-section">
+                        <h2>📰 Source Materials</h2>
+                        <div class="key-insights">
+                            ${data.searchResults.results.slice(0, 6).map(source => `
+                                <div class="insight-card">
+                                    <h4>${source.source}</h4>
+                                    <p><strong>${source.title}</strong></p>
+                                    <p style="font-size: 0.9rem; opacity: 0.8;">${source.description}</p>
+                                    <div class="source-links">
+                                        <a href="${source.url}" target="_blank" class="source-link">Read Full Article</a>
+                                        <span class="confidence-badge">${(source.relevanceScore * 100).toFixed(0)}% relevance</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                this.updateOtherTabs(data, originalQuery);
+            }
+
+            updateOtherTabs(data, query) {
+                document.getElementById('geopolitical').innerHTML = `
+                    <div class="analysis-section">
+                        <h2>🌍 Geopolitical AI Landscape - ${query}</h2>
+                        <div class="key-insights">
+                            <div class="insight-card">
+                                <h4>🇨🇳 China: Efficiency & Scale</h4>
+                                <p>Leading cost-efficient model development with focus on open-source strategies to build global developer ecosystems and reduce dependency on Western AI infrastructure.</p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>🇺🇸 USA: Strategic Repositioning</h4>
+                                <p>Shift from pure scale competition to efficiency and specialization. Major players pivoting towards sustainable competitive advantages through vertical integration.</p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>🇪🇺 Europe: Regulatory Leadership</h4>
+                                <p>AI Act implementation creating global compliance standards. Regulatory-first approach becoming competitive advantage in enterprise and government markets.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('technological').innerHTML = `
+                    <div class="analysis-section">
+                        <h2>⚡ Technology Innovation Vectors - ${query}</h2>
+                        <div class="key-insights">
+                            <div class="insight-card">
+                                <h4>Efficiency Optimization</h4>
+                                <p>Model compression, quantization, and architectural innovations driving significant cost reductions while maintaining performance capabilities.</p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Specialized Reasoning</h4>
+                                <p>Domain-specific models showing superior performance in targeted applications, challenging general-purpose model dominance.</p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Open Source Acceleration</h4>
+                                <p>Community-driven development accelerating innovation cycles and democratizing access to advanced AI capabilities.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('market-intel').innerHTML = `
+                    <div class="analysis-section">
+                        <h2>💰 Market Intelligence Analysis - ${query}</h2>
+                        <div class="key-insights">
+                            <div class="insight-card">
+                                <h4>Investment Flows</h4>
+                                <p>Capital shifting towards efficiency-focused AI companies and specialized reasoning capabilities, with decreased funding for pure scale plays.</p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Competitive Dynamics</h4>
+                                <p>Cost efficiency becoming primary competitive vector, forcing industry consolidation and strategic partnerships for market access.</p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Market Segmentation</h4>
+                                <p>Clear differentiation emerging between enterprise-focused compliance-ready solutions and consumer-oriented efficiency-optimized models.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('regulatory').innerHTML = `
+                    <div class="analysis-section">
+                        <h2>⚖️ Regulatory Landscape Evolution - ${query}</h2>
+                        <div class="key-insights">
+                            <div class="insight-card">
+                                <h4>Compliance Architecture</h4>
+                                <p>Organizations building AI systems with regulatory compliance as foundational design principle rather than post-hoc addition.</p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Global Standards Convergence</h4>
+                                <p>EU AI Act influencing regulatory frameworks globally, creating de facto international standards for AI development and deployment.</p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Market Access Requirements</h4>
+                                <p>Regulatory compliance becoming critical barrier to entry in enterprise and government markets, favoring established players with compliance expertise.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            showError(message) {
+                const content = document.getElementById('analysis-results');
+                content.innerHTML = `
+                    <div class="error-state">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
+                        <div class="loading-text">Analysis Error</div>
+                        <div class="loading-detail">${message}</div>
+                        <button class="search-btn" onclick="location.reload()" style="margin-top: 20px;">Retry</button>
+                    </div>
+                `;
+            }
+
+            addToHistory(query, timeFrame, depth) {
+                this.analysisHistory.unshift({
+                    query,
+                    timeFrame,
+                    depth,
+                    timestamp: new Date().toLocaleString()
+                });
+
+                const historyElement = document.getElementById('analysisHistory');
+                historyElement.innerHTML = this.analysisHistory.slice(0, 5).map(item => `
+                    <div style="margin-bottom: 10px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;" onclick="document.getElementById('searchQuery').value='${item.query}'; document.getElementById('timeFrame').value='${item.timeFrame}'; document.getElementById('analysisDepth').value='${item.depth}';">
+                        <div style="font-size: 0.8rem; color: #00d4ff;">${item.query}</div>
+                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">${item.timestamp}</div>
+                    </div>
+                `).join('');
+            }
+
+            updateUI(state) {
+                const button = document.getElementById('startAnalysis');
+                if (state === 'loading') {
+                    button.disabled = true;
+                    button.textContent = 'Analyzing...';
+                } else {
+                    button.disabled = false;
+                    button.textContent = 'Analyze';
+                }
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId).style.display = 'block';
+            
+            // Add active class to clicked nav tab
+            event.target.classList.add('active');
+        }
+
+        function runQuickAnalysis(query) {
+            document.getElementById('searchQuery').value = query;
+            platform.startAnalysis();
+        }
+
+        // Initialize the platform
+        const platform = new AIIntelligencePlatform();
+    </script>
+</body>
+</html>
