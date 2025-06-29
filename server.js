@@ -99,12 +99,27 @@ class AIIntelligenceService {
         .flat()
         .filter(Boolean);
 
+      // Determine data source status
+      const hasNewsAPI = !!process.env.NEWS_API_KEY;
+      const newsResults = processedResults.filter(r => r.type === 'news');
+      const isLiveData = hasNewsAPI && newsResults.length > 0 && newsResults.some(r => !r.url.includes('example.com'));
+
       const data = {
         results: processedResults,
         totalFound: processedResults.length,
         searchQuery: query,
         timeFrame: timeFrame,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        dataSource: {
+          isLive: isLiveData,
+          hasNewsAPI: hasNewsAPI,
+          sources: {
+            news: newsResults.length,
+            academic: processedResults.filter(r => r.type === 'academic').length,
+            mock: processedResults.filter(r => r.url && r.url.includes('example.com')).length
+          },
+          status: isLiveData ? 'LIVE_DATA' : 'MOCK_DATA_DEMO'
+        }
       };
 
       this.cache.set(cacheKey, { data, timestamp: Date.now() });
@@ -280,6 +295,7 @@ class AIIntelligenceService {
     
     return {
       summary: analysisConfig.summary,
+      detailedInsight: analysisConfig.detailedInsight,
       insights: analysisConfig.insights,
       trends: analysisConfig.trends,
       implications: analysisConfig.implications,
@@ -312,7 +328,67 @@ class AIIntelligenceService {
 
   generateStrategicAnalysis(query, sourceTypes, timeContext) {
     return {
-      summary: `Strategic analysis of ${query} reveals accelerating transformation across multiple dimensions. Our intelligence synthesis indicates ${timeContext.period} has been marked by significant breakthrough developments, with ${sourceTypes.news}% news coverage, ${sourceTypes.academic}% research publications, and ${sourceTypes.industry}% industry reports. Key strategic vectors include technological maturation, market consolidation, regulatory evolution, and competitive repositioning creating new strategic imperatives for organizations.`,
+      summary: `<p><strong>Strategic analysis of ${query}</strong> reveals <em>accelerating transformation</em> across multiple dimensions. Our intelligence synthesis indicates <strong>${timeContext.period}</strong> has been marked by significant breakthrough developments, with:</p>
+      <ul>
+        <li><strong>${sourceTypes.news}%</strong> news coverage</li>
+        <li><strong>${sourceTypes.academic}%</strong> research publications</li>
+        <li><strong>${sourceTypes.industry}%</strong> industry reports</li>
+      </ul>
+      <p>Key strategic vectors include <em>technological maturation</em>, <em>market consolidation</em>, <em>regulatory evolution</em>, and <em>competitive repositioning</em> creating <strong>new strategic imperatives</strong> for organizations.</p>`,
+      detailedInsight: `<div class="detailed-analysis">
+        <p>The strategic landscape surrounding <strong>${query}</strong> has entered a <em>critical transformation phase</em> characterized by unprecedented convergence of:</p>
+        <ul>
+          <li><strong>Technological capability</strong></li>
+          <li><strong>Market demand</strong></li>
+          <li><strong>Regulatory clarity</strong></li>
+        </ul>
+        
+        <p>Our comprehensive analysis reveals that organizations are facing a <strong>fundamental shift</strong> from <em>experimental adoption</em> to <em>production-scale implementation</em>, driven by compelling business cases and competitive pressures that no longer permit delayed decision-making.</p>
+
+        <h4>🎯 Three Primary Transformation Vectors</h4>
+        
+        <h5>1. Technological Maturation</h5>
+        <p>Technological maturation has reached an <strong>inflection point</strong> where ${query} capabilities are transitioning from:</p>
+        <ul>
+          <li><em>Proof-of-concept demonstrations</em> → <strong>Operationally reliable systems</strong></li>
+          <li><em>Laboratory experiments</em> → <strong>Mission-critical business processes</strong></li>
+        </ul>
+        <p>This evolution is evidenced by <em>improving performance metrics</em>, <em>enhanced reliability</em>, and <em>reduced implementation complexity</em> that collectively lower barriers to enterprise adoption.</p>
+
+        <h5>2. Market Dynamics Evolution</h5>
+        <p>Market dynamics are experiencing <strong>rapid consolidation and specialization simultaneously</strong>:</p>
+        <ul>
+          <li><strong>Established leaders:</strong> Leverage scale advantages for comprehensive platforms</li>
+          <li><strong>Emerging competitors:</strong> Carve specialized niches through focused innovation</li>
+        </ul>
+        <p>This creates both <em>partnership opportunities</em> and <em>competitive displacement risks</em>, requiring careful positioning evaluation within evolving ecosystem structures.</p>
+
+        <h5>3. Regulatory Landscape Transformation</h5>
+        <p>Policy frameworks are evolving from <em>reactionary oversight</em> to <strong>proactive governance structures</strong> that:</p>
+        <ul>
+          <li>Provide <strong>clarity for enterprise implementation</strong></li>
+          <li>Reduce <em>uncertainty for strategic planning</em></li>
+          <li>Establish <strong>compliance requirements</strong> favoring robust governance capabilities</li>
+        </ul>
+
+        <h4>🚀 Strategic Success Factors</h4>
+        <p>Organizations demonstrating <strong>leadership in ${query} implementation</strong> are characterized by:</p>
+        <ul>
+          <li><strong>Executive-level commitment</strong></li>
+          <li><em>Cross-functional collaboration</em></li>
+          <li><strong>Systematic capability development approaches</strong></li>
+          <li><em>Integration beyond purely technical considerations</em></li>
+        </ul>
+
+        <h4>⚡ Competitive Implications</h4>
+        <p>The competitive implications are <strong>profound</strong>:</p>
+        <ul>
+          <li><em>Early strategic movers</em> establish <strong>increasingly difficult to overcome advantages</strong></li>
+          <li><em>Market standards solidification</em> and <em>customer expectations evolution</em></li>
+          <li><strong>Strategic urgency</strong> for comprehensive ${query} strategies within defined timeframes</li>
+          <li>Balance between <em>immediate operational improvements</em> and <strong>long-term strategic capabilities</strong></li>
+        </ul>
+      </div>`,
       insights: [
         `Market Leadership Dynamics: ${query} sector experiencing strategic realignment with established players leveraging scale advantages while emerging entities focus on specialized niches and innovative approaches. Cross-industry partnerships becoming critical for competitive positioning.`,
         `Innovation Acceleration Patterns: Development cycles shortening significantly with ${timeContext.period} showing 40% faster iteration compared to previous periods. Open-source contributions driving collaborative innovation while proprietary research focuses on specialized applications.`,
@@ -366,7 +442,73 @@ class AIIntelligenceService {
     const performanceData = this.generatePerformanceMetrics();
     
     return {
-      summary: `Technical analysis of ${query} reveals breakthrough architectural innovations with quantifiable performance improvements. Latest implementations demonstrate ${performanceData.latencyReduction}% latency reduction, ${performanceData.throughputIncrease}% throughput increase, and ${performanceData.memoryOptimization}% memory optimization. Current development emphasizes transformer architecture optimization, distributed inference systems, and edge computing deployment with specific focus on ${architectureSpecs.primaryArchitecture} architectures achieving ${technicalMetrics.inferenceSpeed} tokens/second processing speeds.`,
+      summary: `<p><strong>Technical analysis of ${query}</strong> reveals <em>breakthrough architectural innovations</em> with quantifiable performance improvements:</p>
+      <ul>
+        <li><strong>${performanceData.latencyReduction}%</strong> latency reduction</li>
+        <li><strong>${performanceData.throughputIncrease}%</strong> throughput increase</li>
+        <li><strong>${performanceData.memoryOptimization}%</strong> memory optimization</li>
+      </ul>
+      <p>Current development emphasizes <em>transformer architecture optimization</em>, <em>distributed inference systems</em>, and <em>edge computing deployment</em> with specific focus on <strong>${architectureSpecs.primaryArchitecture} architectures</strong> achieving <strong>${technicalMetrics.inferenceSpeed} tokens/second</strong> processing speeds.</p>`,
+      detailedInsight: `<div class="detailed-analysis">
+        <p>The technical evolution of <strong>${query}</strong> has reached a <em>critical juncture</em> where architectural innovations are delivering <strong>measurable performance breakthroughs</strong> that fundamentally alter the economics and practical viability of enterprise-scale deployments.</p>
+
+        <h4>🏗️ Architectural Landscape Transformation</h4>
+        <p>The architectural landscape is being reshaped by <strong>sophisticated approaches</strong> to model design that optimize for:</p>
+        <ul>
+          <li><strong>Computational efficiency</strong></li>
+          <li><strong>Inference quality</strong></li>
+        </ul>
+        
+        <p>Advanced transformer architectures incorporating:</p>
+        <ul>
+          <li><em>Sparse attention mechanisms</em></li>
+          <li><em>Mixture-of-experts designs</em></li>
+          <li><em>Novel activation functions</em></li>
+        </ul>
+        <p>Are achieving <strong>unprecedented efficiency gains</strong> while maintaining or improving output quality.</p>
+
+        <h4>🔗 Distributed Inference Systems</h4>
+        <p>Sophisticated approaches to <strong>model parallelism</strong> include:</p>
+        <ul>
+          <li><strong>Tensor sharding</strong> enabling linear scaling across multiple computation nodes</li>
+          <li><em>Ring-allreduce patterns</em> reducing communication overhead</li>
+          <li><em>Pipeline parallelism</em> optimizing distributed system performance</li>
+        </ul>
+        <p>These improvements enable organizations to deploy <strong>large-scale models</strong> using <em>commodity hardware configurations</em> rather than specialized supercomputing infrastructure.</p>
+
+        <h4>📱 Edge Computing Deployment</h4>
+        <p>Critical technical differentiators include:</p>
+        <ul>
+          <li><strong>Model compression techniques</strong></li>
+          <li><strong>Quantization strategies</strong></li>
+          <li><strong>Hardware-specific optimizations</strong></li>
+        </ul>
+        
+        <p>The combination of <em>structured pruning</em>, <em>knowledge distillation</em>, and <em>runtime optimizations</em> has achieved:</p>
+        <ul>
+          <li><strong>Dramatic reductions</strong> in model size</li>
+          <li><strong>Lower computational requirements</strong></li>
+          <li><em>Preserved acceptable performance levels</em></li>
+        </ul>
+
+        <h4>🔒 Security & Privacy Integration</h4>
+        <p>Security considerations are <strong>integrated into technical architecture</strong> rather than post-implementation concerns:</p>
+        <ul>
+          <li><strong>Homomorphic encryption</strong> for computation on encrypted data</li>
+          <li><strong>Differential privacy</strong> with mathematical guarantees</li>
+          <li><strong>Secure multi-party computation</strong> protocols</li>
+        </ul>
+        <p>These capabilities are particularly important for <em>enterprise deployments</em> where <strong>regulatory compliance</strong> and <strong>data sovereignty</strong> are essential.</p>
+
+        <h4>⚡ Technical Maturation Impact</h4>
+        <p>The convergence creates deployment scenarios that are:</p>
+        <ul>
+          <li><strong>More capable</strong> than previous generations</li>
+          <li><strong>More efficient</strong> in resource utilization</li>
+          <li><strong>More secure</strong> by design</li>
+        </ul>
+        <p>This enables organizations to move from <em>experimental deployments</em> to <strong>production-scale implementations</strong> supporting mission-critical business processes.</p>
+      </div>`,
       insights: [
         `Neural Architecture Innovations: Implementation of ${architectureSpecs.modelArchitecture} with ${technicalMetrics.parameterCount}B parameters utilizing sparse attention mechanisms reducing computational complexity from O(n²) to O(n√n). Flash Attention 2.0 implementation achieving ${performanceData.memoryReduction}% memory reduction while maintaining numerical precision through mixed fp16/bf16 quantization.`,
         `Distributed Inference Optimization: Pipeline parallelism across ${technicalMetrics.nodeCount} nodes with tensor sharding enabling ${performanceData.scalingEfficiency}% linear scaling efficiency. Implementation of Ring-AllReduce communication patterns reducing inter-node communication overhead by ${performanceData.communicationReduction}%. Dynamic batching algorithms achieving ${performanceData.batchUtilization}% GPU utilization.`,
@@ -430,7 +572,78 @@ class AIIntelligenceService {
 
   generateMarketAnalysis(query, sourceTypes, timeContext) {
     return {
-      summary: `Market analysis of ${query} indicates robust growth trajectory with significant investment flows and competitive dynamics reshaping industry landscapes. Current market characterized by rapid innovation, strategic partnerships, and increasing enterprise adoption driving substantial revenue opportunities.`,
+      summary: `<p><strong>Market analysis of ${query}</strong> indicates <em>robust growth trajectory</em> with significant investment flows and competitive dynamics reshaping industry landscapes.</p>
+      <p>Current market characterized by:</p>
+      <ul>
+        <li><strong>Rapid innovation</strong></li>
+        <li><strong>Strategic partnerships</strong></li>
+        <li><strong>Increasing enterprise adoption</strong></li>
+      </ul>
+      <p>Driving <em>substantial revenue opportunities</em> across multiple sectors.</p>`,
+      detailedInsight: `<div class="detailed-analysis">
+        <p>The market dynamics surrounding <strong>${query}</strong> have evolved beyond <em>early-stage speculation</em> into a <strong>mature commercial ecosystem</strong> characterized by:</p>
+        <ul>
+          <li><strong>Substantial capital deployment</strong></li>
+          <li><strong>Sophisticated competitive strategies</strong></li>
+          <li><strong>Measurable revenue generation</strong> across multiple industry verticals</li>
+        </ul>
+
+        <h4>💰 Investment Pattern Evolution</h4>
+        <p>Capital allocation has shifted from <em>broad-based technology development</em> to <strong>targeted solutions</strong> addressing:</p>
+        <ul>
+          <li><strong>Specific market segments</strong></li>
+          <li><strong>Specialized use cases</strong></li>
+        </ul>
+        <p>This reflects <em>market maturation</em> where investors can more accurately assess:</p>
+        <ul>
+          <li><strong>Commercial viability</strong></li>
+          <li><em>Implementation timelines</em></li>
+          <li><strong>Competitive differentiation factors</strong></li>
+        </ul>
+
+        <h4>🏢 Competitive Ecosystem Structure</h4>
+        <p>A <strong>complex ecosystem</strong> where different players occupy complementary positions:</p>
+        
+        <h5>🏛️ Established Technology Giants</h5>
+        <ul>
+          <li><strong>Leverage existing customer relationships</strong></li>
+          <li><em>Utilize established distribution channels</em></li>
+          <li><strong>Offer comprehensive platforms</strong></li>
+        </ul>
+
+        <h5>🚀 Emerging Companies</h5>
+        <ul>
+          <li><strong>Focus on specialized capabilities</strong></li>
+          <li><em>Develop vertical-specific solutions</em></li>
+          <li><strong>Pursue innovative technical approaches</strong></li>
+        </ul>
+
+        <h4>🌍 Geographic Market Distribution</h4>
+        <p>Regional strengths and strategic priorities:</p>
+        <ul>
+          <li><strong>North America:</strong> Leading in <em>venture capital investment</em> and <em>commercial deployment</em></li>
+          <li><strong>Asia:</strong> Demonstrating strength in <em>manufacturing</em> and <em>integration capabilities</em></li>
+          <li><strong>Europe:</strong> Emphasizing <em>regulatory compliance</em> and <em>ethical implementation frameworks</em></li>
+        </ul>
+
+        <h4>🏢 Enterprise Adoption Maturation</h4>
+        <p>Organizations are moving beyond <em>pilot projects</em> to <strong>strategic implementations</strong> requiring:</p>
+        <ul>
+          <li><strong>Integration with existing systems</strong></li>
+          <li><strong>Regulatory compliance</strong></li>
+          <li><strong>Clear return on investment demonstration</strong></li>
+          <li><em>Comprehensive deployment and governance support</em></li>
+        </ul>
+
+        <h4>💳 Revenue Model Sophistication</h4>
+        <p>Market sophistication demonstrated through diverse revenue approaches:</p>
+        <ul>
+          <li><strong>Subscription-based models:</strong> Providing <em>predictable recurring revenue streams</em></li>
+          <li><strong>Usage-based pricing:</strong> Enabling <em>scalability</em> and <em>customer value alignment</em></li>
+          <li><strong>Marketplace models:</strong> Creating <em>network effects</em> and <em>platform advantages</em></li>
+        </ul>
+        <p>These strategies establish <strong>sustainable competitive market positions</strong> beyond traditional winner-take-all dynamics.</p>
+      </div>`,
       insights: [
         `Investment Trends: Venture capital and private equity demonstrating strong confidence with $${Math.floor(Math.random() * 50 + 20)}B invested in ${timeContext.period}. Focus shifting toward companies with proven revenue models and clear paths to profitability.`,
         `Market Segmentation: Clear differentiation emerging between enterprise-focused solutions emphasizing security and compliance, and consumer-oriented offerings prioritizing ease of use and accessibility.`,
@@ -485,7 +698,79 @@ class AIIntelligenceService {
     const market = this.generateMarketAnalysis(query, sourceTypes, timeContext);
     
     return {
-      summary: `Comprehensive analysis of ${query} reveals a complex ecosystem undergoing rapid transformation across strategic, technical, and market dimensions. Our multi-dimensional assessment indicates significant opportunities coupled with substantial implementation challenges requiring coordinated strategic, technical, and commercial approaches.`,
+      summary: `<p><strong>Comprehensive analysis of ${query}</strong> reveals a <em>complex ecosystem</em> undergoing rapid transformation across multiple dimensions:</p>
+      <ul>
+        <li><strong>Strategic</strong> - Market positioning and competitive dynamics</li>
+        <li><strong>Technical</strong> - Architectural innovations and implementation</li>
+        <li><strong>Market</strong> - Investment flows and commercial adoption</li>
+      </ul>
+      <p>Our multi-dimensional assessment indicates <strong>significant opportunities</strong> coupled with <em>substantial implementation challenges</em> requiring coordinated approaches.</p>`,
+      detailedInsight: `<div class="detailed-analysis">
+        <p>The comprehensive landscape of <strong>${query}</strong> presents a <em>multifaceted transformation</em> that transcends traditional technology adoption patterns, encompassing fundamental shifts across three interconnected dimensions:</p>
+        
+        <h4>🎯 Strategic Dimension</h4>
+        <p>Organizations operate in an environment where <strong>traditional competitive advantages</strong> are being redefined, requiring fundamental rethinking of:</p>
+        <ul>
+          <li><strong>Value propositions</strong></li>
+          <li><strong>Operational models</strong></li>
+          <li><strong>Competitive strategies</strong></li>
+        </ul>
+        <p>This transformation extends beyond technology adoption to encompass:</p>
+        <ul>
+          <li><em>Organizational culture</em></li>
+          <li><em>Talent strategies</em></li>
+          <li><em>Partnership approaches</em></li>
+        </ul>
+
+        <h4>⚙️ Technical Dimension</h4>
+        <p>Enterprise-scale implementation requires <strong>sophisticated coordination</strong> of:</p>
+        <ul>
+          <li><strong>Architectural decisions</strong></li>
+          <li><strong>Infrastructure investments</strong></li>
+          <li><strong>Operational capabilities</strong></li>
+        </ul>
+        <p>Technical requirements extend beyond software development to encompass:</p>
+        <ul>
+          <li><em>Data management strategies</em></li>
+          <li><em>Security protocols</em></li>
+          <li><em>Compliance frameworks</em></li>
+          <li><em>Integration strategies</em></li>
+        </ul>
+
+        <h4>💼 Market Dimension</h4>
+        <p>Market dynamics create both <strong>urgency for capability development</strong> and demand for careful attention to:</p>
+        <ul>
+          <li><strong>Customer requirements</strong></li>
+          <li><strong>Regulatory compliance</strong></li>
+          <li><strong>Financial sustainability</strong></li>
+        </ul>
+        <p>These factors collectively determine <em>commercial viability</em> and <em>competitive positioning</em>.</p>
+
+        <h4>🔗 Interconnected Success Factors</h4>
+        <p>The <strong>interconnected nature</strong> of these dimensions means:</p>
+        <ul>
+          <li><em>Decisions in one area</em> have <strong>cascading effects</strong> across all others</li>
+          <li><strong>Integrated planning approaches</strong> are essential</li>
+          <li><em>Simultaneous coordination</em> required across strategic, technical, and market execution</li>
+        </ul>
+
+        <h4>🏆 Leadership Characteristics</h4>
+        <p>Organizations demonstrating <strong>leadership in ${query} adoption</strong> are characterized by:</p>
+        <ul>
+          <li><strong>Coordinated decision-making</strong> across multiple dimensions</li>
+          <li><em>Maintained agility</em> to adapt as conditions evolve</li>
+          <li><strong>Integrated approaches</strong> spanning all three dimensions</li>
+        </ul>
+
+        <h4>⚡ Strategic Stakes</h4>
+        <p>The stakes are particularly high because:</p>
+        <ul>
+          <li><strong>Early successful implementers</strong> gain <em>compounding advantages</em></li>
+          <li><strong>Fragmented approaches</strong> create <em>substantial risks</em></li>
+          <li><em>Competitive dynamics</em> become <strong>difficult to reverse</strong> once established</li>
+        </ul>
+        <p>This creates both <strong>significant opportunities</strong> for comprehensive approaches and <em>substantial risks</em> for incomplete implementation strategies.</p>
+      </div>`,
       insights: [...strategic.insights.slice(0, 3), ...technical.insights.slice(0, 2), ...market.insights.slice(0, 2)],
       trends: [...strategic.trends.slice(0, 2), ...technical.trends.slice(0, 2), ...market.trends.slice(0, 2)],
       implications: [...strategic.implications.slice(0, 2), ...technical.implications.slice(0, 2), ...market.implications.slice(0, 2)],
