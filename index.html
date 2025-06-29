@@ -940,6 +940,31 @@
                     </div>
                     ` : ''}
 
+                    ${data.analysis.technicalSpecifications ? `
+                    <div class="analysis-section">
+                        <h2>🔧 Technical Specifications</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                            <div class="insight-card">
+                                <h4>Model Architecture</h4>
+                                <p><strong>Type:</strong> ${data.analysis.technicalSpecifications.modelArchitecture}</p>
+                                <p><strong>Parameters:</strong> ${data.analysis.technicalSpecifications.parameters}</p>
+                                <p><strong>Framework:</strong> ${data.analysis.technicalSpecifications.trainingFramework}</p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Performance Metrics</h4>
+                                <p><strong>Inference Latency:</strong> ${data.analysis.technicalSpecifications.inferenceLatency}</p>
+                                <p><strong>Throughput:</strong> ${data.analysis.technicalSpecifications.throughput}</p>
+                                <p><strong>Accuracy:</strong> ${data.analysis.technicalSpecifications.accuracy}</p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Infrastructure Requirements</h4>
+                                <p><strong>GPU Requirements:</strong> ${data.analysis.technicalSpecifications.gpuRequirements}</p>
+                                <p><strong>Power Consumption:</strong> ${data.analysis.technicalSpecifications.powerConsumption}</p>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+
                     <div class="analysis-section">
                         <h2>📰 Source Materials</h2>
                         <div class="key-insights">
@@ -951,7 +976,7 @@
                                     <div class="source-links">
                                         <a href="${source.url}" target="_blank" class="source-link">Read Full Article</a>
                                         <span class="confidence-badge">${(source.relevanceScore * 100).toFixed(0)}% relevance</span>
-                                        <span class="confidence-badge" style="background: rgba(255, 136, 0, 0.2); color: #ff8800;">${source.type}</span>
+                                        <span class="confidence-badge" style="background: ${source.type === 'technical' ? 'rgba(0, 255, 136, 0.2); color: #00ff88' : source.type === 'academic' ? 'rgba(138, 43, 226, 0.2); color: #8a2be2' : 'rgba(255, 136, 0, 0.2); color: #ff8800'}">${source.type}</span>
                                     </div>
                                 </div>
                             `).join('')}
