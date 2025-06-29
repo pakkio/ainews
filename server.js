@@ -139,7 +139,8 @@ class AIIntelligenceService {
 
   async searchNewsAPI(query, timeFrame) {
     if (!process.env.NEWS_API_KEY) {
-      return this.getMockNewsData(query);
+      logger.warn('NEWS_API_KEY not configured - no news data available');
+      return [];
     }
     
     try {
@@ -166,41 +167,10 @@ class AIIntelligenceService {
       }));
     } catch (error) {
       logger.error('News API error:', error.message);
-      return this.getMockNewsData(query);
+      return [];
     }
   }
 
-  getMockNewsData(query) {
-    return [
-      {
-        title: `DEMO: Latest ${query} developments and market analysis`,
-        description: `[PLACEHOLDER] This is demo content showing how news articles would appear. Enable live data by setting NEWS_API_KEY environment variable to get real news articles related to your query.`,
-        url: 'https://example.com/demo-source-1',
-        publishedAt: new Date(Date.now() - 2*24*60*60*1000).toISOString(),
-        source: 'Demo News Source',
-        type: 'news',
-        relevanceScore: 0.85
-      },
-      {
-        title: `DEMO: ${query} industry trends and enterprise adoption`,
-        description: `[PLACEHOLDER] Sample content demonstrating analysis structure. Real data will show actual company announcements, funding rounds, and technical developments when NEWS_API_KEY is configured.`,
-        url: 'https://example.com/demo-source-2',
-        publishedAt: new Date(Date.now() - 24*60*60*1000).toISOString(),
-        source: 'Demo Tech Report',
-        type: 'news',
-        relevanceScore: 0.78
-      },
-      {
-        title: `DEMO: Regulatory and compliance updates for ${query}`,
-        description: `[PLACEHOLDER] Example of regulatory content. Live data will include actual policy changes, compliance requirements, and legal developments affecting the AI industry.`,
-        url: 'https://example.com/demo-source-3',
-        publishedAt: new Date(Date.now() - 36*60*60*1000).toISOString(),
-        source: 'Demo Policy News',
-        type: 'news',
-        relevanceScore: 0.72
-      }
-    ];
-  }
 
   async searchArxiv(query) {
     try {
@@ -269,7 +239,17 @@ class AIIntelligenceService {
   }
 
   async generateAIAnalysis(searchResults, query, analysisDepth = 'strategic') {
-    // Extract key themes and insights from real source content
+    // Check if AI integration is available
+    if (process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY) {
+      try {
+        const aiAnalysis = await this.callAIForAnalysis(searchResults, query, analysisDepth);
+        return aiAnalysis;
+      } catch (error) {
+        console.error('AI analysis failed, falling back to template analysis:', error);
+      }
+    }
+    
+    // Fallback to template-based analysis
     const contentAnalysis = this.analyzeSourceContent(searchResults.results, query);
     const analysisConfig = this.getAnalysisConfig(analysisDepth, query, searchResults, contentAnalysis);
     
@@ -286,11 +266,261 @@ class AIIntelligenceService {
       confidence: analysisConfig.confidence,
       sources_analyzed: searchResults.totalFound,
       analysisDepth: analysisDepth,
-      methodology: 'Multi-source synthesis with confidence scoring',
+      methodology: 'Template-based analysis (AI not configured)',
       lastUpdated: new Date().toISOString(),
       queryContext: this.analyzeQueryContext(query),
       contentThemes: contentAnalysis.themes
     };
+  }
+
+  async callAIForAnalysis(searchResults, query, analysisDepth) {
+    logger.info(`Starting AI analysis for query: "${query}" with depth: ${analysisDepth}`);
+    const prompt = this.buildAnalysisPrompt(searchResults, query, analysisDepth);
+    logger.info(`Built analysis prompt (${prompt.length} characters)`);
+    
+    let analysis;
+    if (process.env.OPENAI_API_KEY) {
+      logger.info('Using OpenAI API for analysis');
+      analysis = await this.callOpenAI(prompt);
+      analysis.methodology = 'AI-powered analysis using GPT-4';
+      logger.info('OpenAI analysis completed successfully');
+    } else if (process.env.ANTHROPIC_API_KEY) {
+      logger.info('Using Anthropic API for analysis');
+      analysis = await this.callAnthropic(prompt);
+      analysis.methodology = 'AI-powered analysis using Claude-3';
+      logger.info('Anthropic analysis completed successfully');
+    } else {
+      logger.error('No AI API key configured');
+      throw new Error('No AI API key configured');
+    }
+    
+    logger.info(`Analysis completed with confidence: ${analysis.confidence || 'N/A'}`);
+    return {
+      ...analysis,
+      sources_analyzed: searchResults.totalFound,
+      analysisDepth: analysisDepth,
+      lastUpdated: new Date().toISOString()
+    };
+  }
+
+  buildAnalysisPrompt(searchResults, query, analysisDepth) {
+    const sourceContent = searchResults.results.map(source => 
+      `Title: ${source.title}\nDescription: ${source.description}\nSource: ${source.source}\nURL: ${source.url}`
+    ).join('\n\n');
+
+    const depthInstructions = {
+      strategic: 'Focus on high-level strategic implications, market trends, and business impact.',
+      technical: 'Provide detailed technical analysis, implementation specifics, and architectural considerations.',
+      market: 'Analyze market dynamics, competitive landscape, investment flows, and growth opportunities.',
+      comprehensive: 'Provide a complete analysis covering strategic, technical, and market perspectives.'
+    };
+
+    return `You are an AI intelligence analyst. Analyze the following search results for the query: "${query}"
+
+ANALYSIS DEPTH: ${analysisDepth}
+INSTRUCTIONS: ${depthInstructions[analysisDepth]}
+
+SOURCE DATA:
+${sourceContent}
+
+FORMATTING REQUIREMENTS:
+- Use **bold** for key terms, company names, and important concepts
+- Use *italics* for emphasis, trends, and emerging technologies  
+- Use Markdown formatting only (no HTML tags)
+- Make content visually engaging with varied formatting
+- Use - bullet points and ## headings in detailed sections
+- Be specific with numbers, dates, and facts where available
+
+The response will be automatically formatted as JSON with the required structure. Focus on providing high-quality analysis content with rich Markdown formatting throughout all fields.`;
+  }
+
+  async callOpenAI(prompt) {
+    logger.info('Making OpenAI API request...');
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1-nano',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 2000,
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "ai_analysis",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  summary: {
+                    type: "string",
+                    description: "Brief executive summary with **bold** and *italic* Markdown formatting"
+                  },
+                  detailedInsight: {
+                    type: "string", 
+                    description: "Detailed analysis with rich Markdown formatting"
+                  },
+                  insights: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      description: "Strategic insight with **bold** and *italic* Markdown"
+                    },
+                    minItems: 5,
+                    maxItems: 7
+                  },
+                  trends: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      description: "Key trend with **bold** names and *italic* descriptions"
+                    },
+                    minItems: 3,
+                    maxItems: 5
+                  },
+                  implications: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      description: "Strategic implication with **bold** areas and *italic* details"
+                    },
+                    minItems: 3,
+                    maxItems: 5
+                  },
+                  technicalDetails: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      description: "Technical detail with **bold** specs and *italic* technologies"
+                    },
+                    minItems: 3,
+                    maxItems: 5
+                  },
+                  marketAnalysis: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      description: "Market analysis point with **bold** metrics and *italic* dynamics"
+                    },
+                    minItems: 3,
+                    maxItems: 5
+                  },
+                  riskAssessment: {
+                    type: "object",
+                    properties: {
+                      technical: {
+                        type: "array",
+                        items: { type: "string" },
+                        minItems: 2,
+                        maxItems: 3
+                      },
+                      regulatory: {
+                        type: "array", 
+                        items: { type: "string" },
+                        minItems: 2,
+                        maxItems: 3
+                      },
+                      competitive: {
+                        type: "array",
+                        items: { type: "string" },
+                        minItems: 2,
+                        maxItems: 3
+                      },
+                      operational: {
+                        type: "array",
+                        items: { type: "string" },
+                        minItems: 2,
+                        maxItems: 3
+                      }
+                    },
+                    required: ["technical", "regulatory", "competitive", "operational"],
+                    additionalProperties: false
+                  },
+                  recommendations: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      description: "Actionable recommendation with **bold** actions and *italic* outcomes"
+                    },
+                    minItems: 5,
+                    maxItems: 5
+                  },
+                  confidence: {
+                    type: "number",
+                    minimum: 0.0,
+                    maximum: 1.0,
+                    description: "Confidence score between 0 and 1"
+                  }
+                },
+                required: ["summary", "detailedInsight", "insights", "trends", "implications", "technicalDetails", "marketAnalysis", "riskAssessment", "recommendations", "confidence"],
+                additionalProperties: false
+              }
+            }
+          }
+        })
+      });
+
+      logger.info(`OpenAI API response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`OpenAI API error: ${response.status} - ${errorText}`);
+        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      logger.info(`OpenAI response received, content length: ${data.choices[0].message.content.length}`);
+      const content = data.choices[0].message.content;
+      
+      try {
+        const analysis = JSON.parse(content);
+        logger.info('Successfully parsed OpenAI response as JSON');
+        return analysis;
+      } catch (error) {
+        logger.error('Failed to parse OpenAI response as JSON:', error.message);
+        logger.error('Raw OpenAI response (first 1000 chars):', content.substring(0, 1000));
+        logger.error('Raw OpenAI response (last 500 chars):', content.substring(Math.max(0, content.length - 500)));
+        throw new Error('Failed to parse AI response as JSON');
+      }
+    } catch (error) {
+      logger.error('OpenAI API call failed:', error.message);
+      throw error;
+    }
+  }
+
+  async callAnthropic(prompt) {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-sonnet-20240229',
+        max_tokens: 2000,
+        temperature: 0.3,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Anthropic API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.content[0].text;
+    
+    try {
+      const analysis = JSON.parse(content);
+      return analysis;
+    } catch (error) {
+      throw new Error('Failed to parse AI response as JSON');
+    }
   }
 
   analyzeSourceContent(sources, query) {
@@ -401,7 +631,7 @@ class AIIntelligenceService {
     return baseAnalysis[depth] || baseAnalysis.strategic;
   }
 
-  """  generateStrategicAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis) {
+  generateStrategicAnalysis(query, sourceTypes, timeContext, queryContext, contentAnalysis) {
     const keyPlayers = contentAnalysis.companies.length > 0 ? contentAnalysis.companies.join(', ') : 'major AI companies';
     const competingTechnologies = contentAnalysis.technologies.length > 0 ? contentAnalysis.technologies.join(', ') : 'AI technologies';
     const events = contentAnalysis.events.length > 0 ? contentAnalysis.events.join(', ') : 'industry developments';
@@ -993,6 +1223,7 @@ app.post('/api/analyze', async (req, res) => {
     const { query, timeFrame = 'week', analysisDepth = 'strategic', region = 'global' } = req.body;
     
     if (!query) {
+      logger.warn('Analysis request missing query parameter');
       return res.status(400).json({ error: 'Query parameter is required' });
     }
 
@@ -1000,9 +1231,17 @@ app.post('/api/analyze', async (req, res) => {
     logger.info(`Generating ${analysisDepth} analysis with enhanced technical detail level`);
 
     const enhancedQuery = region !== 'global' ? `${query} ${region}` : query;
+    logger.info(`Enhanced query: "${enhancedQuery}"`);
+    
+    logger.info('Starting web sources search...');
     const searchResults = await intelligenceService.searchWebSources(enhancedQuery, timeFrame);
+    logger.info(`Search completed. Found ${searchResults.totalFound} sources`);
+    
+    logger.info('Starting AI analysis generation...');
     const analysis = await intelligenceService.generateAIAnalysis(searchResults, enhancedQuery, analysisDepth);
+    logger.info('AI analysis generation completed');
 
+    logger.info('Sending response to client');
     res.json({
       query: enhancedQuery,
       timeFrame,
@@ -1014,7 +1253,8 @@ app.post('/api/analyze', async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('Analysis endpoint error:', error);
+    logger.error('Analysis endpoint error:', error.message);
+    logger.error('Error stack:', error.stack);
     res.status(500).json({ 
       error: 'Analysis failed', 
       message: error.message,
@@ -1025,6 +1265,8 @@ app.post('/api/analyze', async (req, res) => {
 
 app.get('/api/trending', async (req, res) => {
   try {
+    logger.info('Trending analysis request - generating AI insights for trending topics');
+    
     const trendingQueries = [
       'large language models',
       'AI regulations',
@@ -1035,23 +1277,33 @@ app.get('/api/trending', async (req, res) => {
 
     const trendingResults = await Promise.all(
       trendingQueries.map(async (query) => {
-        const results = await intelligenceService.searchWebSources(query, 'week');
+        logger.info(`Processing trending topic: ${query}`);
+        const searchResults = await intelligenceService.searchWebSources(query, 'week');
+        const analysis = await intelligenceService.generateAIAnalysis(searchResults, query, 'strategic');
+        
         return {
           query,
-          count: results.totalFound,
-          topStory: results.results[0] || null
+          count: searchResults.totalFound,
+          topStory: searchResults.results[0] || null,
+          analysis: {
+            summary: analysis.summary,
+            keyInsights: analysis.insights?.slice(0, 3) || [],
+            confidence: analysis.confidence || 0.8,
+            methodology: analysis.methodology
+          }
         };
       })
     );
 
+    logger.info('All trending topics analyzed successfully');
     res.json({
       trending: trendingResults,
       timestamp: new Date().toISOString()
     });
 
   } catch (error) {
-    logger.error('Trending endpoint error:', error);
-    res.status(500).json({ error: 'Failed to fetch trending topics' });
+    logger.error('Trending endpoint error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch trending topics', message: error.message });
   }
 });
 
