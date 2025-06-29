@@ -184,6 +184,34 @@ Response: { status: 'ok', timestamp: '2025-01-XX' }
 - Source availability tracking
 - Analysis quality scores
 
+## Recent Enhancements (v2.0.0)
+
+### Enhanced UI Components
+- **Model Status Indicators**: Each analysis tab now displays assigned AI model (GPT-4, Claude-3, Gemini, GPT-4o, Claude-3.5) with live/offline status dots
+- **Advanced Loading Animation**: Custom hourglass indicator with flip and sand animations replacing basic spinner
+- **Real-time Activity Logging**: Comprehensive logging window with color-coded entries (info, success, warning, error) and auto-scrolling
+- **Improved Button State Management**: Fixed analyze button re-enablement after analysis completion
+
+### Comprehensive Analysis Engine
+- **Multi-Depth Analysis**: Strategic, Technical, Market, and Comprehensive analysis modes with tailored insights
+- **Enhanced Intelligence Synthesis**: 5-7 detailed strategic insights per analysis with specific data points and timelines
+- **Risk Assessment Framework**: 4-category risk matrix (Technical, Regulatory, Competitive, Operational) with severity levels
+- **Strategic Recommendations**: Actionable 5-point recommendation framework with implementation timelines
+- **Technical Architecture Analysis**: Detailed technical implementation guidance for enterprise deployment
+- **Market Intelligence**: Comprehensive market sizing, competitive analysis, and growth driver identification
+
+### Advanced Source Processing
+- **Enhanced Source Diversity**: News, academic papers, and industry reports with improved relevance scoring
+- **Source Type Classification**: Visual indicators and improved categorization for source types
+- **Expanded Source Coverage**: 6-8 sources per analysis with richer descriptions and metadata
+- **Confidence Scoring**: Multi-factor confidence assessment based on source quality, recency, and relevance
+
+### Intelligence Quality Improvements
+- **Executive-Ready Output**: Professional format suitable for strategic decision-making and board presentations
+- **Quantitative Insights**: Specific investment amounts, market sizes, growth percentages, and timeframes
+- **Methodology Transparency**: Clear documentation of analysis methods and confidence factors
+- **Temporal Context**: Time-aware analysis with period-specific insights and trends
+
 ## Future Enhancements
 
 ### Intelligence Pipeline
@@ -202,7 +230,7 @@ Response: { status: 'ok', timestamp: '2025-01-XX' }
 - Multi-language source support
 - Historical trend comparison
 - Competitive intelligence scoring
-- Risk assessment frameworks
+- Advanced risk assessment frameworks
 
 ## Deployment Considerations
 

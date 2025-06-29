@@ -171,6 +171,69 @@
             border-radius: 10px;
             transition: all 0.3s ease;
             font-weight: 500;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .model-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .model-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .model-alive {
+            background: #00ff88;
+        }
+
+        .model-offline {
+            background: #ff4757;
+            animation: none;
+        }
+
+        .hourglass {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            position: relative;
+            border: 2px solid #00d4ff;
+            border-radius: 4px;
+            animation: flip 2s infinite;
+        }
+
+        .hourglass::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: #00d4ff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: sand 2s infinite;
+        }
+
+        @keyframes flip {
+            0%, 50% { transform: rotate(0deg); }
+            100% { transform: rotate(180deg); }
+        }
+
+        @keyframes sand {
+            0% { transform: translate(-50%, -100%); }
+            50% { transform: translate(-50%, 0%); }
+            100% { transform: translate(-50%, 100%); }
         }
 
         .nav-tab.active {
@@ -357,6 +420,58 @@
             gap: 20px;
         }
 
+        .logging-window {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .logging-window h3 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .log-info {
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .log-success {
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .log-warning {
+            color: #ffa502;
+            background: rgba(255, 165, 2, 0.1);
+        }
+
+        .log-error {
+            color: #ff4757;
+            background: rgba(255, 71, 87, 0.1);
+        }
+
+        .log-timestamp {
+            opacity: 0.6;
+            font-size: 0.7rem;
+        }
+
         .widget {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
@@ -464,11 +579,41 @@
         </div>
 
         <nav class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('analysis-results')">Analysis Results</button>
-            <button class="nav-tab" onclick="switchTab('geopolitical')">Geopolitical</button>
-            <button class="nav-tab" onclick="switchTab('technological')">Technology</button>
-            <button class="nav-tab" onclick="switchTab('market-intel')">Market</button>
-            <button class="nav-tab" onclick="switchTab('regulatory')">Regulatory</button>
+            <button class="nav-tab active" onclick="switchTab('analysis-results')">
+                <span>Analysis Results</span>
+                <div class="model-status">
+                    <div class="model-dot model-alive"></div>
+                    <span>GPT-4</span>
+                </div>
+            </button>
+            <button class="nav-tab" onclick="switchTab('geopolitical')">
+                <span>Geopolitical</span>
+                <div class="model-status">
+                    <div class="model-dot model-alive"></div>
+                    <span>Claude-3</span>
+                </div>
+            </button>
+            <button class="nav-tab" onclick="switchTab('technological')">
+                <span>Technology</span>
+                <div class="model-status">
+                    <div class="model-dot model-offline"></div>
+                    <span>Gemini</span>
+                </div>
+            </button>
+            <button class="nav-tab" onclick="switchTab('market-intel')">
+                <span>Market</span>
+                <div class="model-status">
+                    <div class="model-dot model-alive"></div>
+                    <span>GPT-4o</span>
+                </div>
+            </button>
+            <button class="nav-tab" onclick="switchTab('regulatory')">
+                <span>Regulatory</span>
+                <div class="model-status">
+                    <div class="model-dot model-alive"></div>
+                    <span>Claude-3.5</span>
+                </div>
+            </button>
         </nav>
 
         <div class="content-area">
@@ -522,6 +667,15 @@
                     </div>
                 </div>
 
+                <div class="logging-window">
+                    <h3>📋 Activity Log</h3>
+                    <div id="activityLog">
+                        <div class="log-entry log-info">
+                            <span class="log-timestamp">[00:00:00]</span> System initialized - AI Intelligence Platform ready
+                        </div>
+                    </div>
+                </div>
+
                 <div class="widget">
                     <h3>📊 Analysis History</h3>
                     <div id="analysisHistory">
@@ -549,6 +703,8 @@
                 this.analysisHistory = [];
                 this.initializeEventListeners();
                 this.apiBaseUrl = 'http://localhost:3001/api';
+                this.logger = new ActivityLogger();
+                this.logger.log('System initialized - AI Intelligence Platform ready', 'info');
             }
 
             initializeEventListeners() {
@@ -581,8 +737,10 @@
                 try {
                     this.showLoadingState(query);
                     this.updateProgress('Initializing AI intelligence pipeline...', 'active');
+                    this.logger.log('Initializing AI intelligence pipeline', 'info');
                     
                     // Call backend API
+                    this.logger.log('Connecting to backend API', 'info');
                     const response = await fetch(`${this.apiBaseUrl}/analyze`, {
                         method: 'POST',
                         headers: {
@@ -601,24 +759,30 @@
                     }
 
                     this.updateProgress('Gathering intelligence from multiple sources...', 'active');
+                    this.logger.log('Gathering data from multiple sources', 'info');
                     const data = await response.json();
                     
                     this.updateProgress('Processing results with AI synthesis...', 'active');
+                    this.logger.log(`Processing ${data.searchResults.totalFound} sources`, 'info');
                     await this.delay(1500);
                     
                     this.updateProgress('Generating strategic insights...', 'active');
+                    this.logger.log('Generating AI insights and synthesis', 'info');
                     await this.delay(1000);
                     
                     this.displayResults(data, query);
                     this.updateProgress('Analysis complete', 'complete');
+                    this.logger.log('Analysis completed successfully', 'success');
                     
                     this.addToHistory(query, timeFrame, depth);
                     
                 } catch (error) {
                     console.error('Analysis error:', error);
+                    this.logger.log(`Analysis failed: ${error.message}`, 'error');
                     this.showError('Analysis failed. Please ensure the backend server is running.');
                 } finally {
                     this.analysisInProgress = false;
+                    this.updateUI('ready');
                 }
             }
 
@@ -626,7 +790,7 @@
                 const content = document.getElementById('analysis-results');
                 content.innerHTML = `
                     <div class="loading-state">
-                        <div class="loading-spinner"></div>
+                        <div class="hourglass"></div>
                         <div class="loading-text">Analyzing: "${query}"</div>
                         <div class="loading-detail">Connecting to AI intelligence services...</div>
                         <div class="search-progress" id="searchProgress">
@@ -637,6 +801,7 @@
                         </div>
                     </div>
                 `;
+                this.logger.log(`Starting analysis for query: "${query}"`, 'info');
             }
 
             updateProgress(text, status) {
@@ -659,11 +824,19 @@
                 content.innerHTML = `
                     <div class="synthesis-section">
                         <h3>🎯 Strategic Intelligence Synthesis</h3>
-                        <p><strong>Query:</strong> "${originalQuery}"</p>
-                        <p><strong>Generated:</strong> ${timestamp}</p>
-                        <p><strong>Sources Analyzed:</strong> ${data.searchResults.totalFound}</p>
-                        <p><strong>Confidence:</strong> <span class="confidence-badge">${(data.analysis.confidence * 100).toFixed(0)}%</span></p>
-                        <p style="margin-top: 15px;">${data.analysis.summary}</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                            <div>
+                                <p><strong>Query:</strong> "${originalQuery}"</p>
+                                <p><strong>Analysis Depth:</strong> ${data.analysisDepth}</p>
+                                <p><strong>Generated:</strong> ${timestamp}</p>
+                            </div>
+                            <div>
+                                <p><strong>Sources Analyzed:</strong> ${data.searchResults.totalFound}</p>
+                                <p><strong>Methodology:</strong> ${data.analysis.methodology || 'Multi-source synthesis'}</p>
+                                <p><strong>Confidence:</strong> <span class="confidence-badge">${(data.analysis.confidence * 100).toFixed(0)}%</span></p>
+                            </div>
+                        </div>
+                        <p style="margin-top: 15px; line-height: 1.6;">${data.analysis.summary}</p>
                     </div>
 
                     <div class="analysis-section">
@@ -672,7 +845,7 @@
                             ${data.analysis.insights.map((insight, index) => `
                                 <div class="insight-card" style="animation-delay: ${index * 0.1}s">
                                     <h4>Strategic Insight ${index + 1}</h4>
-                                    <p>${insight}</p>
+                                    <p style="line-height: 1.5;">${insight}</p>
                                 </div>
                             `).join('')}
                         </div>
@@ -684,7 +857,7 @@
                             ${data.analysis.trends.map((trend, index) => `
                                 <div class="insight-card" style="animation-delay: ${index * 0.1}s">
                                     <h4>Trend ${index + 1}</h4>
-                                    <p>${trend}</p>
+                                    <p style="line-height: 1.5;">${trend}</p>
                                 </div>
                             `).join('')}
                         </div>
@@ -696,16 +869,81 @@
                             ${data.analysis.implications.map((implication, index) => `
                                 <div class="insight-card" style="animation-delay: ${index * 0.1}s">
                                     <h4>Implication ${index + 1}</h4>
-                                    <p>${implication}</p>
+                                    <p style="line-height: 1.5;">${implication}</p>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
 
+                    ${data.analysis.technicalDetails ? `
+                    <div class="analysis-section">
+                        <h2>⚙️ Technical Architecture</h2>
+                        <div class="key-insights">
+                            ${data.analysis.technicalDetails.map((detail, index) => `
+                                <div class="insight-card" style="animation-delay: ${index * 0.1}s">
+                                    <h4>Technical Detail ${index + 1}</h4>
+                                    <p style="line-height: 1.5;">${detail}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${data.analysis.marketAnalysis ? `
+                    <div class="analysis-section">
+                        <h2>💼 Market Intelligence</h2>
+                        <div class="insight-card">
+                            <h4>Market Overview</h4>
+                            <p><strong>Market Size:</strong> ${data.analysis.marketAnalysis.size}</p>
+                            <p><strong>Market Leaders:</strong> ${data.analysis.marketAnalysis.leaders}</p>
+                            <p><strong>Growth Drivers:</strong> ${data.analysis.marketAnalysis.growth_drivers}</p>
+                            ${data.analysis.marketAnalysis.strategic_considerations ? `<p><strong>Strategic Considerations:</strong> ${data.analysis.marketAnalysis.strategic_considerations}</p>` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${data.analysis.riskAssessment ? `
+                    <div class="analysis-section">
+                        <h2>⚠️ Risk Assessment</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                            <div class="insight-card">
+                                <h4>Technical Risk</h4>
+                                <p><span class="confidence-badge">${data.analysis.riskAssessment.technical}</span></p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Regulatory Risk</h4>
+                                <p><span class="confidence-badge">${data.analysis.riskAssessment.regulatory}</span></p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Competitive Risk</h4>
+                                <p><span class="confidence-badge">${data.analysis.riskAssessment.competitive}</span></p>
+                            </div>
+                            <div class="insight-card">
+                                <h4>Operational Risk</h4>
+                                <p><span class="confidence-badge">${data.analysis.riskAssessment.operational}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${data.analysis.recommendations ? `
+                    <div class="analysis-section">
+                        <h2>💡 Strategic Recommendations</h2>
+                        <div class="key-insights">
+                            ${data.analysis.recommendations.map((rec, index) => `
+                                <div class="insight-card" style="animation-delay: ${index * 0.1}s">
+                                    <h4>Recommendation ${index + 1}</h4>
+                                    <p style="line-height: 1.5;">${rec}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
                     <div class="analysis-section">
                         <h2>📰 Source Materials</h2>
                         <div class="key-insights">
-                            ${data.searchResults.results.slice(0, 6).map(source => `
+                            ${data.searchResults.results.slice(0, 8).map(source => `
                                 <div class="insight-card">
                                     <h4>${source.source}</h4>
                                     <p><strong>${source.title}</strong></p>
@@ -713,6 +951,7 @@
                                     <div class="source-links">
                                         <a href="${source.url}" target="_blank" class="source-link">Read Full Article</a>
                                         <span class="confidence-badge">${(source.relevanceScore * 100).toFixed(0)}% relevance</span>
+                                        <span class="confidence-badge" style="background: rgba(255, 136, 0, 0.2); color: #ff8800;">${source.type}</span>
                                     </div>
                                 </div>
                             `).join('')}
@@ -865,12 +1104,50 @@
             document.getElementById(tabId).style.display = 'block';
             
             // Add active class to clicked nav tab
-            event.target.classList.add('active');
+            const clickedTab = event.target.closest('.nav-tab');
+            clickedTab.classList.add('active');
+            
+            // Log tab switch
+            const tabName = clickedTab.querySelector('span').textContent;
+            platform.logger.log(`Switched to ${tabName} tab`, 'info');
         }
 
         function runQuickAnalysis(query) {
             document.getElementById('searchQuery').value = query;
             platform.startAnalysis();
+        }
+
+        // Activity Logger Class
+        class ActivityLogger {
+            constructor() {
+                this.logContainer = document.getElementById('activityLog');
+                this.maxLogs = 50;
+            }
+
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span> ${message}
+                `;
+
+                this.logContainer.appendChild(logEntry);
+                
+                // Keep only the latest logs
+                const entries = this.logContainer.children;
+                if (entries.length > this.maxLogs) {
+                    this.logContainer.removeChild(entries[0]);
+                }
+
+                // Auto-scroll to bottom
+                this.logContainer.scrollTop = this.logContainer.scrollHeight;
+            }
+
+            clear() {
+                this.logContainer.innerHTML = '';
+                this.log('Activity log cleared', 'info');
+            }
         }
 
         // Initialize the platform
